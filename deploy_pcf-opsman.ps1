@@ -72,7 +72,7 @@ param(
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    $resourceGroup = 'pcf',
+    $resourceGroup = 'control',
     # Name of the Storage Resource Group for Images
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
@@ -346,8 +346,7 @@ $plane_gateway = "$mask.0.1"
 
 Write-Host "Using the following Network Assignments:" -ForegroundColor Magenta
 Write-Host "$resourceGroup-virtual-network/$resourceGroup-infrastructure-subnet  : cidr $infrastructure_cidr,exclude_range $infrastructure_range,gateway $infrastructure_gateway"
-Write-Host "$resourceGroup-virtual-network/$resourceGroup-services-subnet        : cidr $services_cidr,exclude_range $services_range,gateway $services_gateway"
-Write-Host "$resourceGroup-virtual-network/$resourceGroup-pas-subnet             : cidr $plane_cidr,exclude_range $plane_range,gateway $plane_gateway"
+Write-Host "$resourceGroup-virtual-network/$resourceGroup-plane-subnet             : cidr $plane_cidr,exclude_range $plane_range,gateway $plane_gateway"
 Write-Host "$resourceGroup-virtual-network/$resourceGroup-lb-subnet              : cidr $internal_lb_cidr,exclude_range $internal_lb_range,gateway $internal_lb_gateway"
 Write-Host "$($opsManFQDNPrefix)green $Mask.8.4/32"
 Write-Host "$($opsManFQDNPrefix)blue $Mask.8.5/32"
