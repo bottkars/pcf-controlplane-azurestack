@@ -1,0 +1,1366 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "apiProfile": "2018-03-01-hybrid",
+  "parameters": {
+    "boshstorageaccountname": {
+      "type": "string",
+      "defaultValue": "boshstorageaccount",
+      "metadata": {
+        "description": "Name of storage account for bosh jobs"
+      }
+    },
+    "OpsManImageURI": {
+      "type": "string",
+      "defaultValue": "https://opsmanagerimage.blob.local.azurestack.external/images/ops-manager-2.5.2-build.172.vhd",
+      "metadata": {
+        "description": "Local Uri of the Operations Manager VHD to create Custom image from"
+      }
+    },
+    "controllbConnection": {
+      "type": "string",
+      "defaultValue": "public",
+      "allowedValues": [
+        "private",
+        "public"
+      ],
+      "metadata": {
+        "description": "Use managed disks, otherwise, storageaccounts will be created"
+      }
+    },
+    "useManagedDisks": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Use managed disks, otherwise, storageaccounts will be created"
+      }
+    },
+    "Environment": {
+      "type": "string",
+      "defaultValue": "AzureStack",
+      "allowedValues": [
+        "AzureStack",
+        "AzureCloud"
+      ],
+      "metadata": {
+        "description": "Use managed disks, otherwise, storageaccounts will be created"
+      }
+    },
+    "opsManFQDNPrefix": {
+      "type": "string",
+      "defaultValue": "pcf",
+      "metadata": {
+        "description": "Domain prefix for opsman."
+      }
+    },
+    "opsManVHD": {
+      "type": "string",
+      "defaultValue": "2.5.2-build.172",
+      "metadata": {
+        "description": "Opsman VHD Name"
+      }
+    },
+    "mask": {
+      "type": "string",
+      "defaultValue": "10.12",
+      "metadata": {
+        "description": "control network maske"
+      }
+    },
+    "deploymentcolor": {
+      "type": "string",
+      "defaultValue": "green",
+      "metadata": {
+        "description": "select the opsman deployment color"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_F4s_v2",
+      "allowedValues": [
+        "Standard_F4s_v2",
+        "Standard_DS2_v2"
+      ],
+      "metadata": {
+        "description": "Size of vm"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "ubuntu",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "sshKeyData": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for admin user."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "local",
+      "metadata": {
+        "description": "location where you want to deploy resources"
+      }
+    },
+    "dnsZoneName": {
+      "type": "string",
+      "defaultValue": "control.local.azurestack.external",
+      "metadata": {
+        "description": "The name of the DNS zone."
+      }
+    }
+  },
+  "variables": {
+    "boshExtraStorageAccountName": "[concat('xtrastrg',uniquestring(resourceGroup().id, deployment().name))]",
+    "opsManVMName": "[parameters('opsManFQDNPrefix')]",
+    "location": "[parameters('location')]",
+    "virtualNetworkName": "[concat(resourceGroup().name,'-virtual-network')]",
+    "plane_subnet_name": "[concat(resourceGroup().name,'-plane-subnet')]",
+    "infrastructure_subnet_name": "[concat(resourceGroup().name,'-infrastructure-subnet')]",
+    "internallb_subnet_name": "[concat(resourceGroup().name,'-lb-subnet')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "opsManNicName": "[concat('OPSMANNIC_',parameters('deploymentcolor'))]",
+    "addressSpace": "[concat(parameters('mask'),'.0.0/16')]",
+    "infrastructureaddressPrefix": "[concat(parameters('mask'),'.8.0/26')]",
+    "internallbaddressPrefix": "[concat(parameters('mask'),'.8.64/28')]",
+    "internallb_subnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('internallb_subnet_name'))]",
+    "planeaddressPrefix": "[concat(parameters('mask'),'.10.0/28')]",
+    "OpsManGreenIP": "[concat(parameters('mask'),'.8.4')]",
+    "OpsManBlueIP": "[concat(parameters('mask'),'.8.5')]",
+    "opsManPrivateIPAddress": "[if(equals(parameters('deploymentcolor'),'green'), variables('OpsManGreenIP'), variables('OpsManBlueIP'))]",
+    "controllbName": "[concat(resourceGroup().name,'-control-lb')]",
+    "controllbID": "[resourceId('Microsoft.Network/loadBalancers',variables('controllbName'))]",
+    "controlfrontEndIPConfigID": "[concat(variables('controllbID'),'/frontendIPConfigurations/pcf-fe-ip')]",
+    "controllbPoolID": "[concat(variables('controllbID'),'/backendAddressPools/controlplane-backend-pool')]",
+    "controllbProbeID80": "[concat(variables('controllbID'),'/probes/tcp80')]",
+    "controllbProbeID443": "[concat(variables('controllbID'),'/probes/tcp443')]",
+    "diagnosticsStorageAccountName": "[concat('diag', uniquestring(resourceGroup().id))]",
+    "diagnosticsStorageAccountType": "Standard_LRS",
+    "OpsManPublicIPName": "[concat('OpsManPublicIP_', parameters('deploymentcolor'))]",
+    "OpsManIPConfigName": "[concat('OpsManIPConfig_', parameters('deploymentcolor'))]",
+    "OpsManVersion": "[replace(parameters('opsManVHD'),'.vhd', '')]",
+    "ops_manager_security_group_name": "[concat(resourceGroup().name,'-ops-manager-security-group')]",
+    "bosh_deployed_vms_security_group_name": "[concat(resourceGroup().name,'-bosh-deployed-vms-security-group')]",
+    "control_security_group_name": "[concat(resourceGroup().name,'-control-security-group')]",
+    "control-lb-ip-name": "control-lb-public-ip",
+    "controllbPrivateIP": "[concat(parameters('mask'),'.8.73')]",
+    "controllbPulicIPID": "[resourceId('Microsoft.Network/publicIPAddresses','control-lb-public-ip')]",
+    "controllbFrontendIPConfig": "[if(equals(parameters('controllbConnection'),'public'), variables('controllbpublicFrontendIPConfig'), variables('controllbprivateFrontendIPConfig'))]",
+    "controllbpublicFrontendIPConfig": [
+      {
+        "name": "pcf-fe-ip",
+        "properties": {
+          "publicIPAddress": {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses','control-lb-public-ip')]"
+          }
+        }
+      }
+    ],
+    "controllbprivateFrontendIPConfig": [
+      {
+        "name": "pcf-fe-ip",
+        "properties": {
+          "subnet": {
+            "id": "[variables('internallb_subnetID')]"
+          },
+          "privateIPAddress": "[variables('controllbPrivateIP')]",
+          "privateIPAllocationMethod": "Static"
+        }
+      }
+    ]
+
+  
+},
+  "resources": [
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('OpsManVersion')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Linux",
+            "osState": "Generalized",
+            "blobUri": "[parameters('OpsManImageURI')]",
+            "storageAccountType": "Standard_LRS",
+            "caching": "ReadWrite",
+            "diskSizeGB": 127
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('boshStorageAccountName')]",
+      "apiVersion": "2017-10-01",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "condition": "[equals(parameters('usemanageddisks'),'no')]",
+      "name": "[concat(variables('boshExtraStorageAccountName'), '1')]",
+      "apiVersion": "2017-10-01",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "condition": "[equals(parameters('usemanageddisks'),'no')]",
+      "name": "[concat(variables('boshExtraStorageAccountName'), '2')]",
+      "apiVersion": "2017-10-01",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "condition": "[equals(parameters('usemanageddisks'),'no')]",
+      "name": "[concat(variables('boshExtraStorageAccountName'), '3')]",
+      "apiVersion": "2017-10-01",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "condition": "[equals(parameters('usemanageddisks'),'no')]",
+      "name": "[concat(variables('boshExtraStorageAccountName'), '4')]",
+      "apiVersion": "2017-10-01",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "condition": "[equals(parameters('usemanageddisks'),'no')]",
+      "name": "[concat(variables('boshExtraStorageAccountName'), '5')]",
+      "apiVersion": "2017-10-01",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "name": "[variables('diagnosticsStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "sku": {
+        "name": "[variables('diagnosticsStorageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('OpsManPublicIPName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "deployment": "[parameters('deploymentcolor')]",
+        "provisioner": "pcf_opsman_template"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/dnszones",
+      "condition": "[equals(parameters('Environment'),'AzureStack')]",
+      "name": "[parameters('dnsZoneName')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "apiVersion": "2016-04-01",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/dnszones/A",
+      "name": "[concat(parameters('dnsZoneName'),'/', parameters('opsManFQDNPrefix'))]",
+      "apiVersion": "2016-04-01",
+      "properties": {
+        "TTL": 60,
+        "ARecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('OpsManPublicIPName'))).IpAddress]"
+          }
+        ],
+        "targetResource": {}
+      },
+      "dependsOn": [
+        "[parameters('dnsZoneName')]",
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('OpsManPublicIPName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/dnszones/A",
+      "name": "[concat(parameters('dnsZoneName'),'/plane')]",
+      "apiVersion": "2016-04-01",
+      "properties": {
+        "TTL": 60,
+        "ARecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('control-lb-ip-name'))).IpAddress]"
+          }
+        ],
+        "targetResource": {}
+      },
+      "dependsOn": [
+        "[parameters('dnsZoneName')]",
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('control-lb-ip-name'))]"
+      ]
+    },
+
+    {
+      "apiVersion": "2017-10-01",
+      "condition": "[equals(parameters('controllbConnection'),'public')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('control-lb-ip-name')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "name": "[variables('bosh_deployed_vms_security_group_name')]",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "bosh-director",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "25555",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "diego-ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 209,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "mysql",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3306",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 207,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "dns",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 205,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "loggregator",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 206,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "tcp",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1024-1173",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 210,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "mysql-healthcheck",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1936",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 208,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 204,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "internal-anything",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "bosh-agent",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6868",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('ops_manager_security_group_name')]",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 205,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 204,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },    
+    {
+      "name": "[variables('control_security_group_name')]",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 205,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 204,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "8844",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8844",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 214,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "8443",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 220,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }          
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('infrastructure_subnet_name')]",
+            "properties": {
+              "addressPrefix": "[variables('infrastructureaddressPrefix')]"
+            }
+          },
+          {
+            "name": "[variables('internallb_subnet_name')]",
+            "properties": {
+              "addressPrefix": "[variables('internallbaddressPrefix')]"
+            }
+          },
+          {
+            "name": "[variables('plane_subnet_name')]",
+            "properties": {
+              "addressPrefix": "[variables('planeaddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "name": "[variables('controllbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [
+        "[if(equals(parameters('controllbConnection'),'public'), variables('controllbPulicIPID'),resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": "[variables('controllbFrontendIPConfig')]",
+        "backendAddressPools": [
+          {
+            "name": "controlplane-backend-pool"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "control-plane-443",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('controlfrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('controllbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 443,
+              "backendPort": 443,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "probe": {
+                "id": "[variables('controllbProbeID443')]"
+              }
+            }
+          },
+          {
+          "name": "control-plane-8443",
+          "properties": {
+            "frontendIPConfiguration": {
+              "id": "[variables('controlfrontEndIPConfigID')]"
+            },
+            "backendAddressPool": {
+              "id": "[variables('controllbPoolID')]"
+            },
+            "protocol": "Tcp",
+            "frontendPort": 8443,
+            "backendPort": 8443,
+            "enableFloatingIP": false,
+            "idleTimeoutInMinutes": 4,
+            "probe": {
+              "id": "[variables('controllbProbeID443')]"
+            }
+          }
+        },  
+        {
+          "name": "control-plane-8844",
+          "properties": {
+            "frontendIPConfiguration": {
+              "id": "[variables('controlfrontEndIPConfigID')]"
+            },
+            "backendAddressPool": {
+              "id": "[variables('controllbPoolID')]"
+            },
+            "protocol": "Tcp",
+            "frontendPort": 8844,
+            "backendPort": 8844,
+            "enableFloatingIP": false,
+            "idleTimeoutInMinutes": 4,
+            "probe": {
+              "id": "[variables('controllbProbeID443')]"
+            }
+          }
+        },                
+          {
+            "name": "control-plane-80",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('controlfrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('controllbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "probe": {
+                "id": "[variables('controllbProbeID80')]"
+              }
+            }
+          },
+          {
+            "name": "control-plane-2222",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('controlfrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('controllbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 2222,
+              "backendPort": 2222,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcp80",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          },
+          {
+            "name": "tcp443",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 443,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('opsManNicName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "deployment": "[parameters('deploymentcolor')]",
+        "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('ops_manager_security_group_name'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('OpsManPublicIPName'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',  variables('ops_manager_security_group_name'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "[variables('OpsManIPConfigName')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('opsManPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceID('Microsoft.Network/publicIPAddresses/',variables('OpsManPublicIPName'))]"
+              },
+              "subnet": {
+                "id": "[reference(concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))).subnets[0].id]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('ops_manager_security_group_name'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('opsManVMName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "deployment": "[parameters('deploymentcolor')]",
+        "opsmanversion": "[variables('OpsManVersion')]",
+        "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/',variables('opsManNicName'))]",
+        "[concat('Microsoft.Compute/images/', variables('OpsManVersion'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('opsManVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[resourceId('Microsoft.Compute/images', variables('OpsManVersion'))]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('opsManNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName')),providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob)]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "Opsman URL": {
+      "value": "[concat('https://',parameters('opsManFQDNPrefix'),'.', parameters('dnsZoneName'))]",
+      "type": "string"
+    },
+    "Bosh Storageaccount": {
+      "value": "[parameters('boshStorageAccountName')]",
+      "type": "string"
+    },
+    "Extra Storageaccount Prefix": {
+      "type": "string",
+      "value": "[if(equals(parameters('useManagedDisks'), 'no'), variables('boshExtraStorageAccountName'), 'None, using ManagedDisks for extra Storage')]"
+    }
+  }
+}
