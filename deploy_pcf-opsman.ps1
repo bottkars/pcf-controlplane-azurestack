@@ -339,7 +339,7 @@ $infrastructure_gateway = "$mask.8.1"
 $internal_lb_cidr = "$mask.8.64/28"
 $internal_lb_range = "$mask.8.65-$mask.8.69"
 $internal_lb_gateway = "$mask.8.65"
-$plane_cidr = "$Mask.0.0/22"
+$plane_cidr = "$Mask.0.0/28"
 $plane_range = "$mask.0.1-$mask.0.10"
 $plane_gateway = "$mask.0.1"
 
