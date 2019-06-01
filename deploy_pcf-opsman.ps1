@@ -107,10 +107,10 @@ param(
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    $opsManFQDNPrefix = "pcfopsman",
+    $opsManFQDNPrefix = "pcf",
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    $PCF_SUBDOMAIN_NAME = "pcfdemo",
+    $PCF_SUBDOMAIN_NAME = "control",
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('public', 'private')]

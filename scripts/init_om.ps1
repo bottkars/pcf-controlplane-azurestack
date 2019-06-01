@@ -133,11 +133,6 @@ if (!$DO_NOT_APPLY.IsPresent) {
  om --env $HOME/om_$($director_conf.RG).env `
     deployed-products
 
-if ($USE_MINIO.IsPresent)
-    {
-        ./deploy_minio-internal-blobstore.ps1 -DIRECTOR_CONF_FILE $DIRECTOR_CONF_FILE
-
-    }
 
 
 Pop-Location
