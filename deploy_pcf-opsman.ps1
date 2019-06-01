@@ -191,7 +191,7 @@ if (!$location) {
 New-Item -ItemType Directory -Path "$($HOME)/pcfdeployer/logs" -Force | out-null
 $DeployTimes = @()
 $dnsZoneName = "$PCF_SUBDOMAIN_NAME.$Location.$dnsdomain"
-$OM_TARGET = "$($opsManFQDNPrefix)$($deploymentcolor).$($dnszonename)"
+$OM_TARGET = "$($opsManFQDNPrefix).$($dnszonename)"
 Write-Verbose $OM_TARGET
 function get-runningos {
     # backward copatibility for peeps runnin powershell 5

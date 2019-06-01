@@ -18,7 +18,7 @@ networks-configuration:
      gateway: ((plane_gateway))
 network-assignment:
  network:
-  name: controlinfrastructure-subnet
+  name: control-infrastructure-subnet
  singleton_availability_zone:
   name: ((singleton_availability_zone))   
 properties-configuration:
