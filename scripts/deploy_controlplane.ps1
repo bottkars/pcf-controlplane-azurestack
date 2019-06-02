@@ -128,7 +128,7 @@ New-Item -ItemType Directory $local_control -Force | Out-Null
 
 
 "
-control-plane-lb: $($RG)-lb
+control-plane-lb: $($RG)-web-lb
 control-plane-security-group: $($RG)-plane-security-group
 " > "$local_control/vm-extensions-vars.yml"
 
