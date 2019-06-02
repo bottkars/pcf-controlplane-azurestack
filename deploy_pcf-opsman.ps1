@@ -343,8 +343,7 @@ Write-Host "Using the following Network Assignments:" -ForegroundColor Magenta
 Write-Host "$resourceGroup-virtual-network/$resourceGroup-infrastructure-subnet  : cidr $infrastructure_cidr,exclude_range $infrastructure_range,gateway $infrastructure_gateway"
 Write-Host "$resourceGroup-virtual-network/$resourceGroup-plane-subnet             : cidr $plane_cidr,exclude_range $plane_range,gateway $plane_gateway"
 Write-Host "$resourceGroup-virtual-network/$resourceGroup-lb-subnet              : cidr $internal_lb_cidr,exclude_range $internal_lb_range,gateway $internal_lb_gateway"
-Write-Host "$($opsManFQDNPrefix)green $Mask.8.4/32"
-Write-Host "$($opsManFQDNPrefix)blue $Mask.8.5/32"
+Write-Host "$($opsManFQDNPrefix) opsman private ip  $Mask.8.4/32"
 Write-Host "Selected loadbalancer type is $ControllbType"
 Write-Host "Using $Authentication as Identity provider for Azure"
 Write-Host
