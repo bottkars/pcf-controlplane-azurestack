@@ -126,21 +126,18 @@ $local_control="$HOME/control/$RG"
 New-Item -ItemType Directory $local_control -Force | Out-Null
 
 
-"
-control-plane-lb: $($RG)-web-lb
+"control-plane-lb: $($RG)-web-lb
 control-plane-security-group: $($RG)-plane-security-group
 " > "$local_control/vm-extensions-vars.yml"
 
-"
-vm-extension-config:
+"vm-extension-config:
   name: control-plane-lb
   cloud_properties:
    security_group: ((control-plane-security-group))
    load_balancer: ((control-plane-lb))
-"   > "$local_control/vm-extensions.yml"
+"  > "$local_control/vm-extensions.yml"
 
-"
-- type: replace
+"- type: replace
   path: /instance_groups/name=web/vm_extensions?
   value: [control-plane-lb]
 "   > "$local_control/vm-extensions-control.yml"
