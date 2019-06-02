@@ -162,7 +162,7 @@ persistent_disk_type: 10240
 vm_type: Standard_DS11_v2
 network_name: $($RG)-plane-subnet
 azs: [`"Availability Sets`"]
-wildcard_domain: *.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
+wildcard_domain: `"*.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)`"
 uaa_url: https://uaa.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
 uaa_ca_cert: |
   $fullchain
