@@ -109,7 +109,7 @@ foreach($piv_object in $piv_objects) {
 
 om --env $HOME/om_$($ENV_NAME).env bosh-env --ssh-private-key $HOME/opsman
 $STEMCELL_VER="250.17"
-.\scripts\get-lateststemcells.ps1 -Families 250 -STEMRELEASE 17
+.\get-lateststemcells.ps1 -Families 250 -STEMRELEASE 17
 bosh upload-stemcell "$DOWNLOADDIR/stemcells/$STEMCELL_VER/bosh-stemcell-$($STEMCELL_VER)-azure-hyperv-ubuntu-xenial-go_agent.tgz"
 
 om --env $HOME/om_$($RG).env `
