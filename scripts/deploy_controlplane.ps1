@@ -28,7 +28,7 @@ $env_vars = Get-Content $HOME/env.json | ConvertFrom-Json
 $OM_Password = $env_vars.OM_Password
 $OM_Username = $env_vars.OM_Username
 $OM_Target = $OM_Target
-$env:Path = "$($env:Path);$HOME/OM"
+$env:Path = "$($env:Path);$HOME/OM;$HOME/bosh;$HOME/credhub"
 $env_vars = Get-Content $HOME/env.json | ConvertFrom-Json
 $PIVNET_UAA_TOKEN = $env_vars.PIVNET_UAA_TOKEN
 
@@ -39,7 +39,7 @@ $ca_cert = Get-Content $HOME/root.pem
 $ca_cert = $ca_cert -join "\r\n"
 
 $fullchain = get-content "$($HOME)/$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME).crt"
-$fullchain = $fullchain -join "\r\n"
+$fullchain = $fullchain -join "`r`n  "
 ## READ OM KEYS and CERT wit `n`r ad passed as dos strings
 $om_cert = Get-Content "$($HOME)/$($OM_Target).crt"
 $om_cert = $om_cert -join "`r`n"
@@ -96,9 +96,83 @@ if (($force_product_download.ispresent) -or (!(Test-Path "$($output_directory.Fu
         --pivnet-product-slug $tile `
         --product-version $PCF_VERSION `
         --output-directory  "$($output_directory.FullName)"
+
     }
 }
 
+## create temp om env
+om --env $HOME/om_$($RG).env bosh-env --ssh-private-key $HOME/opsman > $env:TEMP\bosh_init.ps1
+.$env:TEMP\bosh_init.ps1
+foreach($piv_object in $piv_objects) {
+    bosh upload-release "$($output_directory.FullName)/$(Split-Path -Leaf $piv_object.aws_object_key)"
+}
 
-# om --env $HOME_DIR/om_$($ENV_NAME).env bosh-env --ssh-private-key $HOME/opsman
+om --env $HOME/om_$($ENV_NAME).env bosh-env --ssh-private-key $HOME/opsman
+$STEMCELL_VER="250.17"
+.\scripts\get-lateststemcells.ps1 -Families 250 -STEMRELEASE 17
+bosh upload-stemcell "$DOWNLOADDIR/stemcells/$STEMCELL_VER/bosh-stemcell-$($STEMCELL_VER)-azure-hyperv-ubuntu-xenial-go_agent.tgz"
+
+om --env $HOME/om_$($RG).env `
+--request-timeout 7200 `
+download-product `
+--pivnet-api-token $PIVNET_UAA_TOKEN `
+--pivnet-file-glob "*.yml" `
+--pivnet-product-slug $tile `
+--product-version $PCF_VERSION `
+--output-directory  "$($output_directory.FullName)"
+
+
+##### creating releases, extensions 
+$local_control="$HOME/control/$RG"
+New-Item -ItemType Directory $local_control -Force | Out-Null
+
+
+"
+control-plane-lb: $($RG)-lb
+control-plane-security-group: $($RG)-plane-security-group
+" > "$local_control/vm-extensions-vars.yml"
+
+"
+vm-extension-config:
+  name: control-plane-lb
+  cloud_properties:
+   security_group: ((control-plane-security-group))
+   load_balancer: ((control-plane-lb))
+"   > "$local_control/vm-extensions.yml"
+
+"
+- type: replace
+  path: /instance_groups/name=web/vm_extensions?
+  value: [control-plane-lb]
+"   > "$local_control/vm-extensions-control.yml"
+
+om --env "$HOME/om_$($RG).env"  `
+  create-vm-extension  `
+  --config  "$local_control/vm-extensions.yml"  `
+  --vars-file  "$local_control/vm-extensions-vars.yml"
+
+om --env "$HOME/om_$($RG).env" `
+  apply-changes 
+
+
+
+"---
+external_url: https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
+persistent_disk_type: 10240
+vm_type: Standard_DS11_v2
+network_name: $($RG)-plane-subnet
+azs: [`"Availability Sets`"]
+wildcard_domain: *.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
+uaa_url: https://uaa.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
+uaa_ca_cert: |
+  $fullchain
+" > "$local_control\bosh-vars.yml"
+
+bosh deploy -n -d control-plane "$($output_directory.FullName)/control-plane-0.0.31-rc.1.yml" `
+  --vars-file=$local_control\bosh-vars.yml `
+  --ops-file=$local_control\vm-extensions-control.yml
+
+
+
+
 Pop-Location

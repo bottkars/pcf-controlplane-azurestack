@@ -16,7 +16,7 @@ $OM_Target = $director_conf.OM_TARGET
 $downloaddir = $director_conf.downloaddir
 # getting the env
 $env_vars = Get-Content $HOME/env.json | ConvertFrom-Json
-$env:Path = "$($env:Path);$HOME/OM"
+$env:Path = "$($env:Path);$HOME/OM;$HOME/bosh;$HOME/credhub"
 $PIVNET_UAA_TOKEN = $env_vars.PIVNET_UAA_TOKEN
 Write-Verbose $PIVNET_UAA_TOKEN
 

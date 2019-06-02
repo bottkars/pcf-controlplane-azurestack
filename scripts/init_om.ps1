@@ -17,6 +17,9 @@ $PCF_SUBDOMAIN_NAME = $director_conf.PCF_SUBDOMAIN_NAME
 
 $boshstorageaccountname = $director_conf.boshstorageaccountname
 $RG = $director_conf.RG
+$local_control="$HOME/control/$RG"
+New-Item -ItemType Directory $local_control -Force | Out-Null
+
 $deploymentstorageaccount = $director_conf.deploymentstorageaccount
 $plane_cidr = $director_conf.plane_cidr
 $plane_range = $director_conf.plane_range

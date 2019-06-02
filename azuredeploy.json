@@ -139,7 +139,7 @@
     "OpsManVersion": "[replace(parameters('opsManVHD'),'.vhd', '')]",
     "ops_manager_security_group_name": "[concat(resourceGroup().name,'-ops-manager-security-group')]",
     "bosh_deployed_vms_security_group_name": "[concat(resourceGroup().name,'-bosh-deployed-vms-security-group')]",
-    "control_security_group_name": "[concat(resourceGroup().name,'-control-security-group')]",
+    "control_security_group_name": "[concat(resourceGroup().name,'-plane-security-group')]",
     "control-lb-ip-name": "control-lb-public-ip",
     "controllbPrivateIP": "[concat(parameters('mask'),'.8.73')]",
     "controllbPulicIPID": "[resourceId('Microsoft.Network/publicIPAddresses','control-lb-public-ip')]",
