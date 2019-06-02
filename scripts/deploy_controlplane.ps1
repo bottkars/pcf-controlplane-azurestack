@@ -86,7 +86,7 @@ $output_directory = New-Item -ItemType Directory "$($downloaddir)/$($tile)_$($PC
 
 
 if (($force_product_download.ispresent) -or (!(Test-Path "$($output_directory.FullName)/download-file.json"))) {
-    Write-Host "downloading $(Split-Path -Leaf $piv_object.aws_object_key) to $($output_directory.FullName)"    
+    Write-Host "downloading $tile components"    
     foreach($piv_object in $piv_objects) {
      om --env $HOME/om_$($director_conf.RG).env `
         --request-timeout 7200 `
