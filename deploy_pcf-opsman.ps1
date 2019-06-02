@@ -334,9 +334,9 @@ $infrastructure_gateway = "$mask.8.1"
 $internal_lb_cidr = "$mask.8.64/28"
 $internal_lb_range = "$mask.8.65-$mask.8.69"
 $internal_lb_gateway = "$mask.8.65"
-$plane_cidr = "$Mask.0.0/28"
-$plane_range = "$mask.0.1-$mask.0.10"
-$plane_gateway = "$mask.0.1"
+$plane_cidr = "$Mask.10.0/28"
+$plane_range = "$mask.10.1-$mask.10.10"
+$plane_gateway = "$mask.10.1"
 
 
 Write-Host "Using the following Network Assignments:" -ForegroundColor Magenta
