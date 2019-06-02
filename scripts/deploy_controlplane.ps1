@@ -88,7 +88,7 @@ $output_directory = New-Item -ItemType Directory "$($downloaddir)/$($tile)_$($PC
 if (($force_product_download.ispresent) -or (!(Test-Path "$($output_directory.FullName)/download-file.json"))) {
     Write-Host "downloading $tile components"    
     foreach($piv_object in $piv_objects) {
-     om --env $HOME/om_$($director_conf.RG).env `
+     om --env $HOME/om_$($RG).env `
         --request-timeout 7200 `
         download-product `
         --pivnet-api-token $PIVNET_UAA_TOKEN `
@@ -107,7 +107,6 @@ foreach($piv_object in $piv_objects) {
     bosh upload-release "$($output_directory.FullName)/$(Split-Path -Leaf $piv_object.aws_object_key)"
 }
 
-om --env $HOME/om_$($ENV_NAME).env bosh-env --ssh-private-key $HOME/opsman
 $STEMCELL_VER="250.17"
 .\get-lateststemcells.ps1 -Families 250 -STEMRELEASE 17
 bosh upload-stemcell "$DOWNLOADDIR/stemcells/$STEMCELL_VER/bosh-stemcell-$($STEMCELL_VER)-azure-hyperv-ubuntu-xenial-go_agent.tgz"
