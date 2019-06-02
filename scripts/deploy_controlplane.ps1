@@ -173,6 +173,8 @@ bosh deploy -n -d control-plane "$($output_directory.FullName)/control-plane-0.0
   --ops-file=$local_control\vm-extensions-control.yml
 
 
-
+Write-Host "You can now login to https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME) with below admin credentials"
+Write-Host "once logged in, use `"fly --target plane login --concourse-url https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)`" to signin to flycli"
+(credhub.exe get /name:"/p-bosh/control-plane/uaa_users_admin" /j| ConvertFrom-Json).value
 
 Pop-Location
