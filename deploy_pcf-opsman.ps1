@@ -138,12 +138,6 @@ param(
     $Environment = "AzureStack",
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    [Parameter(ParameterSetName = "update", Mandatory = $false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet('green', 'blue')]
-    $deploymentcolor = "green",
-    [Parameter(ParameterSetName = "install", Mandatory = $false)]
-    [ValidateNotNullOrEmpty()]
     [switch]$force_product_download,
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
@@ -363,7 +357,7 @@ if (!$boshstorageaccount) {
 }
 $opsManVHD = Split-Path -Leaf $opsmanager_uri
 $opsmanVersion = $opsManVHD -replace ".vhd", ""
-Write-host "Preparing to deploy OpsMan $opsmanVersion for $deploymentcolor deployment" -ForegroundColor $deploymentcolor
+Write-host "Preparing to deploy OpsMan $opsmanVersion" -ForegroundColor Green
 $storageType = 'Standard_LRS'
 $StopWatch_prepare = New-Object System.Diagnostics.Stopwatch
 $StopWatch_deploy = New-Object System.Diagnostics.Stopwatch
@@ -529,7 +523,6 @@ $parameters = @{}
 $parameters.Add("SSHKeyData", $OPSMAN_SSHKEY)
 $parameters.Add("opsManFQDNPrefix", $opsManFQDNPrefix)
 $parameters.Add("opsManVHD", $opsManVHD)
-$parameters.Add("deploymentcolor", $deploymentcolor)
 $parameters.Add("mask", $mask)
 $parameters.Add("location", $location)
 $parameters.Add("OpsManImageURI", $urlOfUploadedImageVhd)
@@ -538,7 +531,7 @@ $parameters.Add("OpsManImageURI", $urlOfUploadedImageVhd)
 $StopWatch_deploy.Start()
 #     $parameters.Add("storageEndpoint", "blob.$blobbaseuri")
 
-Write-host "Starting deployment of PCF Control Plane using ARM template and  $deploymentcolor deployment of $opsManFQDNPrefix $opsmanVersion" -ForegroundColor $deploymentcolor
+Write-host "Starting deployment of PCF Control Plane using ARM template and $opsManFQDNPrefix $opsmanVersion" -ForegroundColor Green
 if (!$OpsmanUpdate) {
     $parameters.Add("dnsZoneName", $dnsZoneName)
     $parameters.Add("boshStorageAccountName", $boshstorageaccount)

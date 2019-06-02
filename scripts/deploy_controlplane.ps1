@@ -1,0 +1,1 @@
+om --env $HOME_DIR/om_$($ENV_NAME).env bosh-env --ssh-private-key $HOME/opsman

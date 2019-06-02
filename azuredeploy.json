@@ -71,13 +71,6 @@
         "description": "control network maske"
       }
     },
-    "deploymentcolor": {
-      "type": "string",
-      "defaultValue": "green",
-      "metadata": {
-        "description": "select the opsman deployment color"
-      }
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_F4s_v2",
@@ -126,16 +119,14 @@
     "infrastructure_subnet_name": "[concat(resourceGroup().name,'-infrastructure-subnet')]",
     "internallb_subnet_name": "[concat(resourceGroup().name,'-lb-subnet')]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-    "opsManNicName": "[concat('OPSMANNIC_',parameters('deploymentcolor'))]",
+    "opsManNicName": "OPSMANNIC",
     "addressSpace": "[concat(parameters('mask'),'.0.0/16')]",
     "infrastructureaddressPrefix": "[concat(parameters('mask'),'.8.0/26')]",
     "internallbaddressPrefix": "[concat(parameters('mask'),'.8.64/28')]",
     "internallb_subnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('internallb_subnet_name'))]",
     "planeaddressPrefix": "[concat(parameters('mask'),'.10.0/28')]",
-    "OpsManGreenIP": "[concat(parameters('mask'),'.8.4')]",
-    "OpsManBlueIP": "[concat(parameters('mask'),'.8.5')]",
-    "opsManPrivateIPAddress": "[if(equals(parameters('deploymentcolor'),'green'), variables('OpsManGreenIP'), variables('OpsManBlueIP'))]",
-    "controllbName": "[concat(resourceGroup().name,'-control-lb')]",
+    "opsManPrivateIPAddress": "[concat(parameters('mask'),'.8.4')]",
+    "controllbName": "[concat(resourceGroup().name,'-web-lb')]",
     "controllbID": "[resourceId('Microsoft.Network/loadBalancers',variables('controllbName'))]",
     "controlfrontEndIPConfigID": "[concat(variables('controllbID'),'/frontendIPConfigurations/pcf-fe-ip')]",
     "controllbPoolID": "[concat(variables('controllbID'),'/backendAddressPools/controlplane-backend-pool')]",
@@ -143,8 +134,8 @@
     "controllbProbeID443": "[concat(variables('controllbID'),'/probes/tcp443')]",
     "diagnosticsStorageAccountName": "[concat('diag', uniquestring(resourceGroup().id))]",
     "diagnosticsStorageAccountType": "Standard_LRS",
-    "OpsManPublicIPName": "[concat('OpsManPublicIP_', parameters('deploymentcolor'))]",
-    "OpsManIPConfigName": "[concat('OpsManIPConfig_', parameters('deploymentcolor'))]",
+    "OpsManPublicIPName": "'OpsManPublicIP",
+    "OpsManIPConfigName": "OpsManIPConfig",
     "OpsManVersion": "[replace(parameters('opsManVHD'),'.vhd', '')]",
     "ops_manager_security_group_name": "[concat(resourceGroup().name,'-ops-manager-security-group')]",
     "bosh_deployed_vms_security_group_name": "[concat(resourceGroup().name,'-bosh-deployed-vms-security-group')]",
@@ -175,9 +166,7 @@
         }
       }
     ]
-
-  
-},
+  },
   "resources": [
     {
       "type": "Microsoft.Compute/images",
@@ -309,7 +298,6 @@
       "name": "[variables('OpsManPublicIPName')]",
       "location": "[variables('location')]",
       "tags": {
-        "deployment": "[parameters('deploymentcolor')]",
         "provisioner": "pcf_opsman_template"
       },
       "properties": {
@@ -363,7 +351,6 @@
         "[concat('Microsoft.Network/publicIPAddresses/',variables('control-lb-ip-name'))]"
       ]
     },
-
     {
       "apiVersion": "2017-10-01",
       "condition": "[equals(parameters('controllbConnection'),'public')]",
@@ -877,7 +864,7 @@
           }
         ]
       }
-    },    
+    },
     {
       "name": "[variables('control_security_group_name')]",
       "apiVersion": "2017-10-01",
@@ -972,7 +959,7 @@
               "sourceAddressPrefixes": [],
               "destinationAddressPrefixes": []
             }
-          }          
+          }
         ],
         "defaultSecurityRules": [
           {
@@ -1162,43 +1149,43 @@
             }
           },
           {
-          "name": "control-plane-8443",
-          "properties": {
-            "frontendIPConfiguration": {
-              "id": "[variables('controlfrontEndIPConfigID')]"
-            },
-            "backendAddressPool": {
-              "id": "[variables('controllbPoolID')]"
-            },
-            "protocol": "Tcp",
-            "frontendPort": 8443,
-            "backendPort": 8443,
-            "enableFloatingIP": false,
-            "idleTimeoutInMinutes": 4,
-            "probe": {
-              "id": "[variables('controllbProbeID443')]"
+            "name": "control-plane-8443",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('controlfrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('controllbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 8443,
+              "backendPort": 8443,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "probe": {
+                "id": "[variables('controllbProbeID443')]"
+              }
             }
-          }
-        },  
-        {
-          "name": "control-plane-8844",
-          "properties": {
-            "frontendIPConfiguration": {
-              "id": "[variables('controlfrontEndIPConfigID')]"
-            },
-            "backendAddressPool": {
-              "id": "[variables('controllbPoolID')]"
-            },
-            "protocol": "Tcp",
-            "frontendPort": 8844,
-            "backendPort": 8844,
-            "enableFloatingIP": false,
-            "idleTimeoutInMinutes": 4,
-            "probe": {
-              "id": "[variables('controllbProbeID443')]"
+          },
+          {
+            "name": "control-plane-8844",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('controlfrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('controllbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 8844,
+              "backendPort": 8844,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "probe": {
+                "id": "[variables('controllbProbeID443')]"
+              }
             }
-          }
-        },                
+          },
           {
             "name": "control-plane-80",
             "properties": {
@@ -1263,7 +1250,6 @@
       "name": "[variables('opsManNicName')]",
       "location": "[variables('location')]",
       "tags": {
-        "deployment": "[parameters('deploymentcolor')]",
         "provisioner": "pcf_opsman_template"
       },
       "dependsOn": [
@@ -1300,7 +1286,6 @@
       "name": "[variables('opsManVMName')]",
       "location": "[variables('location')]",
       "tags": {
-        "deployment": "[parameters('deploymentcolor')]",
         "opsmanversion": "[variables('OpsManVersion')]",
         "provisioner": "pcf_opsman_template"
       },
