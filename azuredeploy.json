@@ -134,7 +134,7 @@
     "controllbProbeID443": "[concat(variables('controllbID'),'/probes/tcp443')]",
     "diagnosticsStorageAccountName": "[concat('diag', uniquestring(resourceGroup().id))]",
     "diagnosticsStorageAccountType": "Standard_LRS",
-    "OpsManPublicIPName": "'OpsManPublicIP",
+    "OpsManPublicIPName": "OpsManPublicIP",
     "OpsManIPConfigName": "OpsManIPConfig",
     "OpsManVersion": "[replace(parameters('opsManVHD'),'.vhd', '')]",
     "ops_manager_security_group_name": "[concat(resourceGroup().name,'-ops-manager-security-group')]",
