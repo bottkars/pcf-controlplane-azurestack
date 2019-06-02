@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory = $false)]
     [ValidateSet('170', '250','97','3586','3541')]
     [string[]]$Families= '170',
-    [string]$RELEASE,
+    [string]$STEMRELEASE,
     [Parameter(Mandatory = $false)]
     [switch]$apply
 )
@@ -34,7 +34,8 @@ foreach ($Family in $Families)
                 $branchs += Get-PIVRelease -id 82 | where-object version -Match 3541. | Select-Object -First 1
         }
         default {
-                $branchs += Get-PIVRelease -id 233 | where-object version -Match "$Family.$RELEASE" | Select-Object -First 1    
+                if ($STEMRELEASE){$stemver="$FAMILY.$STEMRELEASE"} else {$stemver="$FAMILY."}
+                $branchs += Get-PIVRelease -id 233 | where-object version -Match "$stemver" | Select-Object -First 1    
             }
     }
 }
