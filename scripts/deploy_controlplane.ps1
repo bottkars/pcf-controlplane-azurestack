@@ -142,7 +142,7 @@ control-plane-security-group: $($RG)-plane-security-group
   value: [control-plane-lb]
 "   > "$local_control/vm-extensions-control.yml"
 
-om --env "$HOME/om_$($RG).env"  `
+om --env "$HOME/om_$($RG).env" `
   create-vm-extension  `
   --config  "$local_control/vm-extensions.yml"  `
   --vars-file  "$local_control/vm-extensions-vars.yml"
