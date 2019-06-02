@@ -6,13 +6,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [switch]
-    $DO_NOT_APPLY,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateNotNullOrEmpty()]
-    [switch]
-    $USE_MINIO
-
+    $DO_NOT_APPLY
 )
 Push-Location $PSScriptRoot
 $director_conf = Get-Content $DIRECTOR_CONF_FILE | ConvertFrom-Json
