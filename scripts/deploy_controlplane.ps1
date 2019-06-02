@@ -69,9 +69,7 @@ if (!$access_token) {
     Write-Warning "Error getting token"
     break
 }
-else {
-    Write-Verbose $access_token
-}
+
 Write-Host "Getting Release for $tile $PCF_VERSION"
 $piv_release = Get-PIVRelease -id $tile | Where-Object version -Match $PCF_VERSION | Select-Object -First 1
 Write-Host "Getting Release ID for $PCF_VERSION"

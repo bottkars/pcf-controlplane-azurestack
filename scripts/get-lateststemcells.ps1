@@ -18,10 +18,8 @@ $downloaddir = $director_conf.downloaddir
 $env_vars = Get-Content $HOME/env.json | ConvertFrom-Json
 $env:Path = "$($env:Path);$HOME/OM;$HOME/bosh;$HOME/credhub"
 $PIVNET_UAA_TOKEN = $env_vars.PIVNET_UAA_TOKEN
-Write-Verbose $PIVNET_UAA_TOKEN
 
-$access_token = Get-PIVaccesstoken -refresh_token $PIVNET_UAA_TOKEN -Verbose
-
+$access_token = Get-PIVaccesstoken -refresh_token $PIVNET_UAA_TOKEN
 
 $branchs = @()
 
