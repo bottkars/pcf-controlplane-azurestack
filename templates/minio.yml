@@ -34,7 +34,7 @@ instance_groups:
   networks:
   - name: ((network_name))
   vm_type: ((vm_type))
-  persistent_disk_type: 2048
+  persistent_disk_type: 1048576
   stemcell: default
 
 - name: tests
@@ -70,10 +70,9 @@ instance_groups:
     properties:
       script: |
         #!/bin/sh
-        mc mb myminio/bucket1
-        mc mb myminio/bucket2
-        mc mb myminio/bucket3
-        mc mb myminio/bucket3
+        mc mb minio/bucket1
+        mc mb minio/bucket2
+        mc mb minio/bucket3
   networks:
   - name: ((network_name))
   vm_type: ((vm_type))
@@ -81,7 +80,7 @@ instance_groups:
   stemcell: default
 
 update:
-  canaries: 1
+  canaries: 2
   canary_watch_time: 1000-30000
   update_watch_time: 1000-30000
-  max_in_flight: 1
+  max_in_flight: 2
