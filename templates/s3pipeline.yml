@@ -6,6 +6,8 @@ resources:
     secret_access_key: ((secret_access_key))
     bucket: ((tasks_bucket))
     regexp: platform-automation-tasks-(.*).zip
+    endpoint:  ((s3_endpoint))
+
 
 - name: platform-automation-image-s3
   type: s3
@@ -14,6 +16,7 @@ resources:
     secret_access_key: ((secret_access_key))
     bucket: ((image_bucket))
     regexp: platform-automation-image-(.*).tgz
+    endpoint:  ((s3_endpoint))
 
 jobs:
 - name: test-resources
