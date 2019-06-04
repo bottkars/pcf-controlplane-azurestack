@@ -190,7 +190,7 @@ bosh deploy -n -d control-plane "$($output_directory.FullName)/control-plane-0.0
 
 bosh upload-release https://bosh.io/d/github.com/minio/minio-boshrelease
 
-bosh deploy -n -d minio ..\templates\minio.yml `
+bosh deploy -n -d minio-control ..\templates\minio.yml `
   --vars-file=$local_control\bosh-vars.yml `
   --ops-file=$local_control\vm-extensions-minio.yml
 
