@@ -589,8 +589,6 @@ if (!$OpsmanUpdate) {
             Authentication          = $Authentication
         } | ConvertTo-Json
         $JSon | Set-Content $DIRECTOR_CONF_FILE
-
-
         Write-Host "now we are going to try and configure OpsManager"
         if (!$DO_NOT_CONFIGURE_OPSMAN.IsPresent) {
             $StopWatch_deploy_opsman = New-Object System.Diagnostics.Stopwatch
@@ -598,30 +596,9 @@ if (!$OpsmanUpdate) {
             if ($DO_NOT_APPLY.IsPresent) {
                 $command = "$ScriptDir/init_om.ps1 -DIRECTOR_CONF_FILE $DIRECTOR_CONF_FILE -DO_NOT_APPLY"
             }
-            elseif ($USE_MINIO.IsPresent) {
-                $command = "$ScriptDir/init_om.ps1 -DIRECTOR_CONF_FILE $DIRECTOR_CONF_FILE -USE_MINIO"    
-            }
             else {
                 $command = "$ScriptDir/init_om.ps1 -DIRECTOR_CONF_FILE $DIRECTOR_CONF_FILE"    
             }
-            switch ($branch)
-            {
-                '2.5' {
-                    $stemcell = '250'
-                }
-                '2.4' {
-                    $stemcell = '170'
-                } 
-                default {
-                    $stemcell = "97"
-                }   
-
-            }
-            switch ($pastype){
-            'cf' {
-                $compute_instances = [math]::ceiling($compute_instances/3)*3
-            }
-}
             Write-Host "Calling $command" 
             Invoke-Expression -Command $Command | Tee-Object -Append -FilePath "$($HOME)/pcfdeployer/logs/init-om-$(get-date -f yyyyMMddhhmmss).log"
             $StopWatch_deploy_opsman.Stop()

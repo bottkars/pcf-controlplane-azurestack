@@ -75,13 +75,10 @@ $piv_release = Get-PIVRelease -id $tile | Where-Object version -Match $PCF_VERSI
 Write-Host "Getting Release ID for $PCF_VERSION"
 $piv_release_id = $piv_release | Get-PIVFileReleaseId
 
-
 Write-Host "Accepting EULA for $tile $PCF_VERSION"
 $eula = $piv_release | Confirm-PIVEula -access_token $access_token
 $piv_objects = $piv_release_id | Where-Object aws_object_key -Like "*.tgz"
 $output_directory = New-Item -ItemType Directory "$($downloaddir)/$($tile)_$($PCF_VERSION)" -Force
-
-
 
 if (($force_product_download.ispresent) -or (!(Test-Path "$($output_directory.FullName)/download-file.json"))) {
     Write-Host "downloading $tile components"    
@@ -126,24 +123,45 @@ New-Item -ItemType Directory $local_control -Force | Out-Null
 
 "control-plane-lb: $($RG)-web-lb
 control-plane-security-group: $($RG)-plane-security-group
-" > "$local_control/vm-extensions-vars.yml"
+" > "$local_control/vm-lb-extensions-vars.yml"
+
+"control-minio-lb: $($RG)-minio-lb
+control-minio-security-group: $($RG)-minio-security-group
+" > "$local_control/vm-lb-extensions-minio-vars.yml"
 
 "vm-extension-config:
   name: control-plane-lb
   cloud_properties:
    security_group: ((control-plane-security-group))
    load_balancer: ((control-plane-lb))
-"  > "$local_control/vm-extensions.yml"
+"  > "$local_control/vm-lb-extensions.yml"
+
+"vm-extension-config:
+  name: control-minio-lb
+  cloud_properties:
+   security_group: ((control-minio-security-group))
+   load_balancer: ((control-minio-lb))
+"  > "$local_control/vm-lb-extensions-minio.yml"
 
 "- type: replace
   path: /instance_groups/name=web/vm_extensions?
   value: [control-plane-lb]
 "   > "$local_control/vm-extensions-control.yml"
 
+"- type: replace
+  path: /instance_groups/name=minio/vm_extensions?
+  value: [control-minio-lb]
+"   > "$local_control/vm-extensions-minio.yml"
+
 om --env "$HOME/om_$($RG).env" `
   create-vm-extension  `
-  --config  "$local_control/vm-extensions.yml"  `
-  --vars-file  "$local_control/vm-extensions-vars.yml"
+  --config  "$local_control/vm-lb-extensions.yml"  `
+  --vars-file  "$local_control/vm-lb-extensions-vars.yml"
+
+om --env "$HOME/om_$($RG).env" `
+  create-vm-extension  `
+  --config  "$local_control/vm-lb-extensions-minio.yml"  `
+  --vars-file  "$local_control/vm-lb-extensions-minio-vars.yml"
 
 om --env "$HOME/om_$($RG).env" `
   apply-changes 
@@ -154,9 +172,13 @@ om --env "$HOME/om_$($RG).env" `
 external_url: https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
 persistent_disk_type: 10240
 vm_type: Standard_DS11_v2
-network_name: $($RG)-plane-subnet
-azs: [`"Availability Sets`"]
-wildcard_domain: `"*.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)`"
+stemcell_version: $STEMCELL_VER
+network_name: control-plane-subnet
+azs: ['Availability Sets']
+minio_accesskey: s3admin
+minio_secretkey: $PIVNET_UAA_TOKEN 
+minio_deployment_name: minio-$($RG) 
+wildcard_domain: '*.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)'
 uaa_url: https://uaa.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
 uaa_ca_cert: |
   $fullchain
@@ -165,6 +187,12 @@ uaa_ca_cert: |
 bosh deploy -n -d control-plane "$($output_directory.FullName)/control-plane-0.0.31-rc.1.yml" `
   --vars-file=$local_control\bosh-vars.yml `
   --ops-file=$local_control\vm-extensions-control.yml
+
+bosh upload-release https://bosh.io/d/github.com/minio/minio-boshrelease
+
+bosh deploy -n -d minio ..\templates\minio.yml `
+  --vars-file=$local_control\bosh-vars.yml `
+  --ops-file=$local_control\vm-extensions-minio.yml
 
 
 Write-Host "You can now login to https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME) with below admin credentials"

@@ -17,6 +17,17 @@
         "description": "Local Uri of the Operations Manager VHD to create Custom image from"
       }
     },
+    "miniolbConnection": {
+      "type": "string",
+      "defaultValue": "public",
+      "allowedValues": [
+        "private",
+        "public"
+      ],
+      "metadata": {
+        "description": "Connection Type for Minio LB"
+      }
+    },
     "controllbConnection": {
       "type": "string",
       "defaultValue": "public",
@@ -25,7 +36,7 @@
         "public"
       ],
       "metadata": {
-        "description": "Use managed disks, otherwise, storageaccounts will be created"
+        "description": "Connection type for Control lb"
       }
     },
     "useManagedDisks": {
@@ -128,10 +139,15 @@
     "opsManPrivateIPAddress": "[concat(parameters('mask'),'.8.4')]",
     "controllbName": "[concat(resourceGroup().name,'-web-lb')]",
     "controllbID": "[resourceId('Microsoft.Network/loadBalancers',variables('controllbName'))]",
-    "controlfrontEndIPConfigID": "[concat(variables('controllbID'),'/frontendIPConfigurations/pcf-fe-ip')]",
+    "controlfrontEndIPConfigID": "[concat(variables('controllbID'),'/frontendIPConfigurations/control-fe-ip')]",
     "controllbPoolID": "[concat(variables('controllbID'),'/backendAddressPools/controlplane-backend-pool')]",
     "controllbProbeID80": "[concat(variables('controllbID'),'/probes/tcp80')]",
     "controllbProbeID443": "[concat(variables('controllbID'),'/probes/tcp443')]",
+    "miniolbName": "[concat(resourceGroup().name,'-minio-lb')]",
+    "miniolbID": "[resourceId('Microsoft.Network/loadBalancers',variables('miniolbName'))]",
+    "miniofrontEndIPConfigID": "[concat(variables('miniolbID'),'/frontendIPConfigurations/minio-fe-ip')]",
+    "miniolbPoolID": "[concat(variables('miniolbID'),'/backendAddressPools/minio-backend-pool')]",
+    "miniolbProbeID9000": "[concat(variables('miniolbID'),'/probes/tcp9000')]",
     "diagnosticsStorageAccountName": "[concat('diag', uniquestring(resourceGroup().id))]",
     "diagnosticsStorageAccountType": "Standard_LRS",
     "OpsManPublicIPName": "OpsManPublicIP",
@@ -139,6 +155,11 @@
     "OpsManVersion": "[replace(parameters('opsManVHD'),'.vhd', '')]",
     "ops_manager_security_group_name": "[concat(resourceGroup().name,'-ops-manager-security-group')]",
     "bosh_deployed_vms_security_group_name": "[concat(resourceGroup().name,'-bosh-deployed-vms-security-group')]",
+    "minio_security_group_name": "[concat(resourceGroup().name,'-minio-security-group')]",
+    "minio-lb-ip-name": "minio-lb-public-ip",
+    "miniolbPrivateIP": "[concat(parameters('mask'),'.8.73')]",
+    "miniolbPulicIPID": "[resourceId('Microsoft.Network/publicIPAddresses','minio-lb-public-ip')]",
+    "miniolbFrontendIPConfig": "[if(equals(parameters('miniolbConnection'),'public'), variables('miniolbpublicFrontendIPConfig'), variables('miniolbprivateFrontendIPConfig'))]",
     "control_security_group_name": "[concat(resourceGroup().name,'-plane-security-group')]",
     "control-lb-ip-name": "control-lb-public-ip",
     "controllbPrivateIP": "[concat(parameters('mask'),'.8.73')]",
@@ -146,7 +167,7 @@
     "controllbFrontendIPConfig": "[if(equals(parameters('controllbConnection'),'public'), variables('controllbpublicFrontendIPConfig'), variables('controllbprivateFrontendIPConfig'))]",
     "controllbpublicFrontendIPConfig": [
       {
-        "name": "pcf-fe-ip",
+        "name": "control-fe-ip",
         "properties": {
           "publicIPAddress": {
             "id": "[resourceId('Microsoft.Network/publicIPAddresses','control-lb-public-ip')]"
@@ -156,12 +177,34 @@
     ],
     "controllbprivateFrontendIPConfig": [
       {
-        "name": "pcf-fe-ip",
+        "name": "control-fe-ip",
         "properties": {
           "subnet": {
             "id": "[variables('internallb_subnetID')]"
           },
           "privateIPAddress": "[variables('controllbPrivateIP')]",
+          "privateIPAllocationMethod": "Static"
+        }
+      }
+    ],
+    "miniolbpublicFrontendIPConfig": [
+      {
+        "name": "minio-fe-ip",
+        "properties": {
+          "publicIPAddress": {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses','minio-lb-public-ip')]"
+          }
+        }
+      }
+    ],
+    "miniolbprivateFrontendIPConfig": [
+      {
+        "name": "minio-fe-ip",
+        "properties": {
+          "subnet": {
+            "id": "[variables('internallb_subnetID')]"
+          },
+          "privateIPAddress": "[variables('miniolbPrivateIP')]",
           "privateIPAllocationMethod": "Static"
         }
       }
@@ -335,6 +378,24 @@
     },
     {
       "type": "Microsoft.Network/dnszones/A",
+      "name": "[concat(parameters('dnsZoneName'),'/minio')]",
+      "apiVersion": "2016-04-01",
+      "properties": {
+        "TTL": 60,
+        "ARecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('minio-lb-ip-name'))).IpAddress]"
+          }
+        ],
+        "targetResource": {}
+      },
+      "dependsOn": [
+        "[parameters('dnsZoneName')]",
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('minio-lb-ip-name'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/dnszones/A",
       "name": "[concat(parameters('dnsZoneName'),'/plane')]",
       "apiVersion": "2016-04-01",
       "properties": {
@@ -356,6 +417,19 @@
       "condition": "[equals(parameters('controllbConnection'),'public')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('control-lb-ip-name')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "condition": "[equals(parameters('miniolbConnection'),'public')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('minio-lb-ip-name')]",
       "location": "[variables('location')]",
       "tags": {
         "provisioner": "pcf_opsman_template"
@@ -1074,6 +1148,146 @@
       }
     },
     {
+      "name": "[variables('minio_security_group_name')]",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "9000",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9000",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 214,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },
+    {
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
@@ -1237,6 +1451,58 @@
             "properties": {
               "protocol": "Tcp",
               "port": 443,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "name": "[variables('miniolbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [
+        "[if(equals(parameters('miniolbConnection'),'public'), variables('miniolbPulicIPID'),resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": "[variables('miniolbFrontendIPConfig')]",
+        "backendAddressPools": [
+          {
+            "name": "minio-backend-pool"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "minio-9000",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('miniofrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('miniolbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 9000,
+              "backendPort": 9000,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "probe": {
+                "id": "[variables('miniolbProbeID9000')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcp9000",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 9000,
               "intervalInSeconds": 5,
               "numberOfProbes": 2
             }
