@@ -34,7 +34,7 @@ instance_groups:
   networks:
   - name: ((network_name))
   vm_type: ((vm_type))
-  persistent_disk_type: 1048576
+  persistent_disk_type: 100_240
   stemcell: default
 
 - name: tests
