@@ -96,8 +96,8 @@ if (($force_product_download.ispresent) -or (!(Test-Path "$($output_directory.Fu
 }
 
 ## create temp om env
-om --env $HOME/om_$($RG).env bosh-env --ssh-private-key $HOME/opsman > $env:TEMP\bosh_init.ps1
-.$env:TEMP\bosh_init.ps1
+#om --env $HOME/om_$($RG).env bosh-env --ssh-private-key $HOME/opsman > $env:TEMP\bosh_init.ps1
+Invoke-Expression $(om --env $HOME/om_$($RG).env  bosh-env --ssh-private-key $HOME/opsman | Out-String)
 foreach($piv_object in $piv_objects) {
     bosh upload-release "$($output_directory.FullName)/$(Split-Path -Leaf $piv_object.aws_object_key)"
 }
