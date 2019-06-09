@@ -170,7 +170,7 @@ om --env "$HOME/om_$($RG).env" `
 
 "---
 external_url: https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
-persistent_disk_type: 10240
+persistent_disk_type: 204800
 vm_type: Standard_DS11_v2
 stemcell_version: $STEMCELL_VER
 network_name: control-plane-subnet
