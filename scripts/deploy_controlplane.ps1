@@ -9,6 +9,7 @@ param(
     $DO_NOT_APPLY
 )
 Push-Location $PSScriptRoot
+$worker_instances='3'
 $director_conf = Get-Content $DIRECTOR_CONF_FILE | ConvertFrom-Json
 $OM_Target = $director_conf.OM_TARGET
 $domain = $director_conf.domain
@@ -146,6 +147,9 @@ control-minio-security-group: $($RG)-minio-security-group
 "- type: replace
   path: /instance_groups/name=web/vm_extensions?
   value: [control-plane-lb]
+- type: replace
+  path: /instance_groups/name=zookeeper/instances
+  value: $worker_instances  
 "   > "$local_control/vm-extensions-control.yml"
 
 "- type: replace
