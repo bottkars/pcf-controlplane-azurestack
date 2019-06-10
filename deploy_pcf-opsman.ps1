@@ -329,13 +329,13 @@ $blobbaseuri = (Get-AzureRmContext).Environment.StorageEndpointSuffix
 $BaseNetworkVersion = [version]$subnet.IPAddressToString
 $mask = "$($BaseNetworkVersion.Major).$($BaseNetworkVersion.Minor)"
 $infrastructure_cidr = "$mask.8.0/26"
-$infrastructure_range = "$mask.8.1-$mask.8.10"
+$infrastructure_range = "$mask.8.1-$mask.8.5"
 $infrastructure_gateway = "$mask.8.1"
 $internal_lb_cidr = "$mask.8.64/28"
 $internal_lb_range = "$mask.8.65-$mask.8.69"
 $internal_lb_gateway = "$mask.8.65"
 $plane_cidr = "$Mask.10.0/28"
-$plane_range = "$mask.10.1-$mask.10.10"
+$plane_range = "$mask.10.1-$mask.10.5"
 $plane_gateway = "$mask.10.1"
 
 
