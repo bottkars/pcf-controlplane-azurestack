@@ -70,7 +70,7 @@
     },
     "opsManVHD": {
       "type": "string",
-      "defaultValue": "2.5.2-build.172",
+      "defaultValue": "2.5.7-build.208",
       "metadata": {
         "description": "Opsman VHD Name"
       }
@@ -162,7 +162,7 @@
     "miniolbFrontendIPConfig": "[if(equals(parameters('miniolbConnection'),'public'), variables('miniolbpublicFrontendIPConfig'), variables('miniolbprivateFrontendIPConfig'))]",
     "control_security_group_name": "[concat(resourceGroup().name,'-plane-security-group')]",
     "control-lb-ip-name": "control-lb-public-ip",
-    "controllbPrivateIP": "[concat(parameters('mask'),'.8.73')]",
+    "controllbPrivateIP": "[concat(parameters('mask'),'.8.74')]",
     "controllbPulicIPID": "[resourceId('Microsoft.Network/publicIPAddresses','control-lb-public-ip')]",
     "controllbFrontendIPConfig": "[if(equals(parameters('controllbConnection'),'public'), variables('controllbpublicFrontendIPConfig'), variables('controllbprivateFrontendIPConfig'))]",
     "controllbpublicFrontendIPConfig": [

@@ -64,11 +64,12 @@ param(
         '2.4-build.177',
         ## 2.5 start here
         '2.5.2-build.172',
-        '2.5.4-build.185',        
+        '2.5.3-build.185',        
         '2.5.4-build.189',
-        '2.5.5-build.194'
+        '2.5.5-build.194',
+        '2.5.7-build.208'
     )]
-    $opsmanager_image = '2.5.2-build.172',
+    $opsmanager_image = '2.5.7-build.208',
     # The name of the Ressource Group we want to Deploy to.
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
