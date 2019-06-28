@@ -148,7 +148,7 @@ control-minio-security-group: $($RG)-minio-security-group
   path: /instance_groups/name=web/vm_extensions?
   value: [control-plane-lb]
 - type: replace
-  path: /instance_groups/name=zookeeper/instances
+  path: /instance_groups/name=worker/instances
   value: $worker_instances  
 "   > "$local_control/vm-extensions-control.yml"
 
