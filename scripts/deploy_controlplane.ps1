@@ -3,13 +3,12 @@ param(
     [Parameter(Mandatory = $false)]	
     [Validatescript( {Test-Path -Path $_ })]
     $DIRECTOR_CONF_FILE="$HOME/director_control.json",
-
+    $worker_instances='1',
     [Parameter(Mandatory = $false)]
     [switch]
     $DO_NOT_APPLY
 )
 Push-Location $PSScriptRoot
-$worker_instances='3'
 $director_conf = Get-Content $DIRECTOR_CONF_FILE | ConvertFrom-Json
 $OM_Target = $director_conf.OM_TARGET
 $domain = $director_conf.domain
