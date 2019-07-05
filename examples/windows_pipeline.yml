@@ -13,8 +13,7 @@ resources:
 #  type: docker-image
 #  source:
 #   repository: bottkars/azs-powershell
-#   username: bottkars
-#   password: Breda1208
+
 
 jobs:
 - name: test-powershell 
