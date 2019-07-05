@@ -1,0 +1,117 @@
+---
+name: concourse-windows
+releases:
+- name: "concourse"
+  version: ((concourse-bosh-release))
+- name: "windows-utilities"
+  version: ((windows_utilities_version))
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: ((stemcell-release))
+- alias: windows
+  os: "windows2019"
+  version: "2019.7"  
+instance_groups:
+- azs: ((azs))
+  instances: 1
+  jobs:
+  - name: set_password
+    release: windows-utilities
+    properties:
+      set_password:
+        username: "administrator" # defaults to "Administrator"
+        password: "Foobar123!" # must meet default Windows complexity requirements
+  - name: enable_ssh
+    release: windows-utilities
+  - name: enable_rdp
+    release: windows-utilities  
+  - consumes:
+      baggagclaim-windows: {from: windows-baggageclaim}
+      garden: {from: windows-garden}  
+    name: worker-windows
+    properties:
+      drain_timeout: 10m
+      tsa:
+        host_public_key: ((/p-bosh/control-plane/tsa_host_key.public_key))
+        host: plane.control.local.azurestack.external
+        worker_key: ((/p-bosh/control-plane/worker_key))
+    release: concourse
+  - name: houdini-windows
+    provides: 
+      garden:
+        as: windows-garden
+    release: concourse
+  - name: baggageclaim-windows
+    provides: {baggageclaim-windows: {as: windows-baggageclaim}}
+    release: concourse
+  lifecycle: service
+  name: windows-worker
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: ((network_name))
+  stemcell: windows
+  update:
+    max_in_flight: 1
+  vm_type: ((vm_type))
+ 
+update:
+  canaries: 1
+  canary_watch_time: 30000-600000
+  max_in_flight: 1
+  serial: false
+  update_watch_time: 30000-600000
+variables:
+- name: concourse_client_secret
+  type: password
+- name: credhub_admin_client_password
+  type: password
+- name: concourse_to_credhub_secret
+  type: password
+- name: credhub_db_password
+  type: password
+- name: credhub_encryption_password
+  options:
+    length: 40
+  type: password
+- name: postgres_password
+  type: password
+- name: token_signing_key
+  type: rsa
+- name: tsa_host_key
+  type: ssh
+- name: uaa_admin
+  type: password
+- name: uaa_db_password
+  type: password
+- name: uaa_encryption_key
+  type: password
+- name: uaa_jwt
+  options:
+    key_length: 4096
+  type: rsa
+- name: uaa_login
+  type: password
+- name: uaa_users_admin
+  type: password
+- name: worker_key
+  type: ssh
+- name: control-plane-ca
+  options:
+    common_name: controlplaneca
+    is_ca: true
+  type: certificate
+- name: control-plane-tls
+  options:
+    alternative_names:
+    - ((wildcard_domain))
+    ca: control-plane-ca
+    common_name: control-plane-tls
+  type: certificate
+- name: db-tls
+  options:
+    ca: control-plane-ca
+    common_name: db.service.cf.internal
+  type: certificate

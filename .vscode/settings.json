@@ -1,0 +1,4 @@
+{
+    "bosh.cli.command": "$HOME/om",
+    "bosh.cli.target": "10.12.8.6"
+}

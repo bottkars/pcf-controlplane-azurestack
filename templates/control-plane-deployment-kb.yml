@@ -1,0 +1,368 @@
+---
+name: control-plane
+releases:
+- name: "concourse"
+  version: ((concourse-bosh-release))
+- name: "garden-runc"
+  version: ((garden-runc-release))
+- name: "postgres"
+  version: ((postgres-release))
+- name: "credhub"
+  version: ((credhub-release))
+- name: "uaa"
+  version: ((uaa-release))
+- name: bosh-dns-aliases
+  version: ((bosh-dns-aliases-release))
+- name: bpm
+  version: ((bpm-release))
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: ((stemcell-release))
+- alias: windows
+  os: "windows2019"
+  version: "2019.7"  
+addons:
+- jobs:
+  - name: bosh-dns-aliases
+    properties:
+      aliases:
+      - domain: db.service.cf.internal
+        targets:
+        - deployment: control-plane
+          domain: bosh
+          instance_group: db
+          network: ((network_name))
+          query: '*'
+    release: bosh-dns-aliases
+  name: bosh-dns-aliases  
+instance_groups:
+- azs: ((azs))
+  instances: 1
+  jobs:
+  - consumes: {}
+    name: atc
+    properties:
+      bind_port: 80
+      credhub:
+        client_id: concourse_to_credhub
+        client_secret: ((concourse_to_credhub_secret))
+        tls:
+          ca_cert:
+            certificate: ((control-plane-ca.certificate))
+        url: ((external_url)):8844
+      external_url: ((external_url))
+      generic_oauth:
+        auth_url: ((external_url)):8443/oauth/authorize
+        ca_cert:
+          certificate: ((control-plane-ca.certificate))
+        client_id: concourse
+        client_secret: ((concourse_client_secret))
+        display_name: UAA
+        token_url: ((external_url)):8443/oauth/token
+        userinfo_url: ((external_url)):8443/userinfo
+      log_level: debug
+      main_team:
+        auth:
+          oauth:
+            users:
+            - admin
+      postgresql:
+        ca_cert: ((control-plane-ca.certificate))
+        database: atc
+        role:
+          name: concourse
+          password: ((postgres_password))
+      tls_bind_port: 443
+      tls_cert: ((control-plane-tls.certificate))
+      tls_key: ((control-plane-tls.private_key))
+      token_signing_key: ((token_signing_key))
+    provides: {}
+    release: concourse
+  - consumes: {}
+    name: tsa
+    properties:
+      authorized_keys:
+      - ((worker_key.public_key))
+      host_key: ((tsa_host_key))
+      token_signing_key: ((token_signing_key))
+    provides: {}
+    release: concourse
+  - consumes:
+      postgres:
+        from: db
+    name: credhub
+    properties:
+      bpm:
+        enabled: true
+      credhub:
+        authentication:
+          uaa:
+            ca_certs:
+            - ((control-plane-ca.certificate))
+            url: ((external_url)):8443
+        authorization:
+          permissions:
+          - actors:
+            - uaa-client:credhub_admin_client
+            operations:
+            - read
+            - write
+            - delete
+            - read_acl
+            - write_acl
+            path: /*
+          - actors:
+            - uaa-client:concourse_to_credhub
+            operations:
+            - read
+            path: /concourse/*
+        ca_certificate: ((control-plane-ca.certificate))
+        data_storage:
+          database: credhub
+          password: ((credhub_db_password))
+          require_tls: true
+          tls_ca: ((control-plane-ca.certificate))
+          type: postgres
+          username: credhub
+        encryption:
+          keys:
+          - active: true
+            key_properties:
+              encryption_password: ((credhub_encryption_password))
+            provider_name: internal
+          providers:
+          - name: internal
+            type: internal
+        port: 8844
+        tls:
+          certificate: ((control-plane-tls.certificate))
+          private_key: ((control-plane-tls.private_key))
+    provides: {}
+    release: credhub
+  - consumes:
+      database:
+        from: db
+    name: uaa
+    properties:
+      encryption:
+        active_key_label: key-1
+        encryption_keys:
+        - label: key-1
+          passphrase: ((uaa_encryption_key))
+      login:
+        saml:
+          serviceProviderCertificate: ((control-plane-tls.certificate))
+          serviceProviderKey: ((control-plane-tls.private_key))
+          serviceProviderKeyPassword: ""
+      uaa:
+        admin:
+          client_secret: ((uaa_admin))
+        ca_certs:
+        - ((control-plane-ca.certificate))
+        clients:
+          concourse:
+            access-token-validity: 1200
+            authorized-grant-types: authorization_code,refresh_token
+            override: true
+            redirect-uri: ((external_url))/sky/issuer/callback
+            refresh-token-validity: 3600
+            scope: openid,email,profile,roles
+            secret: ((concourse_client_secret))
+          concourse_to_credhub:
+            access-token-validity: 1200
+            authorities: credhub.read,credhub.write
+            authorized-grant-types: client_credentials
+            override: true
+            refresh-token-validity: 3600
+            scope: ""
+            secret: ((concourse_to_credhub_secret))
+          credhub_admin_client:
+            access-token-validity: 1200
+            authorities: credhub.read,credhub.write
+            authorized-grant-types: client_credentials
+            override: true
+            scope: uaa.none
+            secret: ((credhub_admin_client_password))
+        jwt:
+          policy:
+            active_key_id: key-1
+            keys:
+              key-1:
+                signingKey: ((uaa_jwt.private_key))
+          revocable: true
+        login:
+          client_secret: ((uaa_login))
+        scim:
+          users:
+          - groups:
+            - scim.write
+            - scim.read
+            - bosh.admin
+            name: admin
+            password: ((uaa_users_admin))
+        sslCertificate: ((control-plane-tls.certificate))
+        sslPrivateKey: ((control-plane-tls.private_key))
+        url: ((external_url)):8443
+        zones:
+          internal:
+            hostnames: []
+      uaadb:
+        address: db.service.cf.internal
+        databases:
+        - name: uaa
+          tag: uaa
+        db_scheme: postgresql
+        port: 5432
+        roles:
+        - name: uaa
+          password: ((uaa_db_password))
+          tag: admin
+        tls_enabled: true
+    provides: {}
+    release: uaa
+  - consumes: {}
+    name: bpm
+    provides: {}
+    release: bpm  
+  lifecycle: service
+  name: web
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: ((network_name))
+  stemcell: default
+  update:
+    max_in_flight: 1
+  vm_type: ((vm_type))
+- azs: ((azs))
+  instances: 1
+  jobs:
+  - consumes: {}
+    name: postgres
+    properties:
+      databases:
+        databases:
+        - name: atc
+        - name: credhub
+        - name: uaa
+        port: 5432
+        roles:
+        - name: concourse
+          password: ((postgres_password))
+        - name: credhub
+          password: ((credhub_db_password))
+        - name: uaa
+          password: ((uaa_db_password))
+        tls:
+          ca: ((control-plane-ca.certificate))
+          certificate: ((control-plane-tls.certificate))
+          private_key: ((control-plane-tls.private_key))
+    provides:
+      postgres:
+        as: db
+    release: postgres
+  lifecycle: service
+  name: db
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: ((network_name))
+  persistent_disk_type: ((persistent_disk_type))
+  stemcell: default
+  update:
+    max_in_flight: 1
+  vm_type: ((vm_type))
+- azs: ((azs))
+  instances: 1
+  jobs:
+  - release: concourse
+    consumes:
+      baggagclaim-worker: {from: worker-baggageclaim}
+    name: worker
+    properties:
+      drain_timeout: 10m
+      tsa:
+        worker_key: ((worker_key))
+  - name: garden
+    properties:
+      garden:
+        allow_host_access: true
+        listen_address: 0.0.0.0:7777
+        listen_network: tcp
+    release: garden-runc
+  - name: baggageclaim
+    provides: {baggageclaim-worker: {as: worker-baggageclaim}}
+    release: concourse
+  lifecycle: service
+  name: worker-linux
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: ((network_name))
+  stemcell: default
+  update:
+    max_in_flight: 1
+  vm_type: ((vm_type))
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-600000
+  max_in_flight: 1
+  serial: false
+  update_watch_time: 30000-600000
+variables:
+- name: concourse_client_secret
+  type: password
+- name: credhub_admin_client_password
+  type: password
+- name: concourse_to_credhub_secret
+  type: password
+- name: credhub_db_password
+  type: password
+- name: credhub_encryption_password
+  options:
+    length: 40
+  type: password
+- name: postgres_password
+  type: password
+- name: token_signing_key
+  type: rsa
+- name: tsa_host_key
+  type: ssh
+- name: uaa_admin
+  type: password
+- name: uaa_db_password
+  type: password
+- name: uaa_encryption_key
+  type: password
+- name: uaa_jwt
+  options:
+    key_length: 4096
+  type: rsa
+- name: uaa_login
+  type: password
+- name: uaa_users_admin
+  type: password
+- name: worker_key
+  type: ssh
+- name: control-plane-ca
+  options:
+    common_name: controlplaneca
+    is_ca: true
+  type: certificate
+- name: control-plane-tls
+  options:
+    alternative_names:
+    - ((wildcard_domain))
+    ca: control-plane-ca
+    common_name: control-plane-tls
+  type: certificate
+- name: db-tls
+  options:
+    ca: control-plane-ca
+    common_name: db.service.cf.internal
+  type: certificate
