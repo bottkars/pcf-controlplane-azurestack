@@ -40,54 +40,6 @@ instance_groups:
 - azs: ((azs))
   instances: 1
   jobs:
-  - consumes: {}
-    name: atc
-    properties:
-      bind_port: 80
-      credhub:
-        client_id: concourse_to_credhub
-        client_secret: ((concourse_to_credhub_secret))
-        tls:
-          ca_cert:
-            certificate: ((control-plane-ca.certificate))
-        url: ((external_url)):8844
-      external_url: ((external_url))
-      generic_oauth:
-        auth_url: ((external_url)):8443/oauth/authorize
-        ca_cert:
-          certificate: ((control-plane-ca.certificate))
-        client_id: concourse
-        client_secret: ((concourse_client_secret))
-        display_name: UAA
-        token_url: ((external_url)):8443/oauth/token
-        userinfo_url: ((external_url)):8443/userinfo
-      log_level: debug
-      main_team:
-        auth:
-          oauth:
-            users:
-            - admin
-      postgresql:
-        ca_cert: ((control-plane-ca.certificate))
-        database: atc
-        role:
-          name: concourse
-          password: ((postgres_password))
-      tls_bind_port: 443
-      tls_cert: ((control-plane-tls.certificate))
-      tls_key: ((control-plane-tls.private_key))
-      token_signing_key: ((token_signing_key))
-    provides: {}
-    release: concourse
-  - consumes: {}
-    name: tsa
-    properties:
-      authorized_keys:
-      - ((worker_key.public_key))
-      host_key: ((tsa_host_key))
-      token_signing_key: ((token_signing_key))
-    provides: {}
-    release: concourse
   - consumes:
       postgres:
         from: db
@@ -224,7 +176,50 @@ instance_groups:
   - consumes: {}
     name: bpm
     provides: {}
-    release: bpm  
+    release: bpm
+  - consumes: {}
+    name: web
+    release: concourse
+    properties: 
+      worker_gateway:
+        authorized_keys: |
+          ((worker_key.public_key))
+        host_key: ((tsa_host_key))
+        token_signing_key: ((token_signing_key))
+      bind_port: 80
+      credhub:
+        client_id: concourse_to_credhub
+        client_secret: ((concourse_to_credhub_secret))
+        tls:
+          ca_cert:
+            certificate: ((control-plane-ca.certificate))
+        url: ((external_url)):8844
+      external_url: ((external_url))
+      generic_oauth:
+        auth_url: ((external_url)):8443/oauth/authorize
+        ca_cert:
+          certificate: ((control-plane-ca.certificate))
+        client_id: concourse
+        client_secret: ((concourse_client_secret))
+        display_name: UAA
+        token_url: ((external_url)):8443/oauth/token
+        userinfo_url: ((external_url)):8443/userinfo
+      log_level: debug
+      main_team:
+        auth:
+          oauth:
+            users:
+            - admin
+      postgresql:
+        ca_cert: ((control-plane-ca.certificate))
+        database: atc
+        role:
+          name: concourse
+          password: ((postgres_password))
+      tls_bind_port: 443
+      tls_cert: ((control-plane-tls.certificate))
+      tls_key: ((control-plane-tls.private_key))
+      token_signing_key: ((token_signing_key))    
   lifecycle: service
   name: web
   networks:
@@ -236,7 +231,7 @@ instance_groups:
   update:
     max_in_flight: 1
   vm_type: ((vm_type))
-- azs: ((azs))
+- azs: ((azs)) # db instance
   instances: 1
   jobs:
   - consumes: {}
@@ -279,23 +274,15 @@ instance_groups:
   instances: 1
   jobs:
   - release: concourse
-    consumes:
-      baggagclaim-worker: {from: worker-baggageclaim}
     name: worker
     properties:
       drain_timeout: 10m
-      tsa:
+      worker_gateway:
         worker_key: ((worker_key))
-  - name: garden
-    properties:
       garden:
         allow_host_access: true
         listen_address: 0.0.0.0:7777
         listen_network: tcp
-    release: garden-runc
-  - name: baggageclaim
-    provides: {baggageclaim-worker: {as: worker-baggageclaim}}
-    release: concourse
   lifecycle: service
   name: worker-linux
   networks:

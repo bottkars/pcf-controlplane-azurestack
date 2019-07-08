@@ -1,31 +1,25 @@
----
-# example tasks
 resources:
-- name: azs-concourse
-  type: git
-  source: 
-    uri: https://github.com/bottkars/azs-concourse
-    branch: master
-    private_key: ((azs-resource-key.private_key))
-
-#- name: azs-powershell
-#  #icon: amazon-drive
-#  type: docker-image
-#  source:
-#   repository: bottkars/azs-powershell
-
+- name: azurestack-powershell-image
+  type: s3
+  source:
+    bucket: image
+    regexp: azure-stack-powershell-(.*).tgz
+    access_key_id: ((access_key_id))
+    endpoint:  ((s3_endpoint))
+    region_name: ((s3_region_name))
+    secret_access_key: ((secret_access_key))
 
 jobs:
-- name: test-powershell 
+- name: imagefrom-sr3
   plan:
-  - get: azs-concourse
-    trigger: true
-#  - get: azs-powershell
-#    trigger: true
- #   params:
-  #      save: false
-  #      rootfs: false
-  #      skip_download: true
-  - task: test-powershell
-    file: azs-concourse/ci/powershell/tasks/test-task.yml
-    # image: azure-stack-powershell
+  - get: azurestack-powershell-image
+    params:
+      unpack: true
+  - task: run-with-image-from-s3-using-resource-definition
+    image: azurestack-powershell-image
+    config:
+      platform: windows
+      run:
+        path: powershell.exe
+        args:
+        - get-computerinfo

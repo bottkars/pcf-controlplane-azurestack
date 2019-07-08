@@ -5,10 +5,11 @@ releases:
   version: ((concourse-bosh-release))
 - name: "windows-utilities"
   version: ((windows_utilities_version))
+- name: "garden-windows"
+  version: ((garden_windows_release))
+- name: "winc"
+  version: ((winc_release))  
 stemcells:
-- alias: default
-  os: ubuntu-xenial
-  version: ((stemcell-release))
 - alias: windows
   os: "windows2019"
   version: "2019.7"  
@@ -26,24 +27,14 @@ instance_groups:
     release: windows-utilities
   - name: enable_rdp
     release: windows-utilities  
-  - consumes:
-      baggagclaim-windows: {from: windows-baggageclaim}
-      garden: {from: windows-garden}  
+  - consumes: {}
+#      baggagclaim-windows: {from: windows-baggageclaim}
+#      garden: {from: windows-garden}  
     name: worker-windows
     properties:
       drain_timeout: 10m
-      tsa:
-        host_public_key: ((/p-bosh/control-plane/tsa_host_key.public_key))
-        host: plane.control.local.azurestack.external
+      worker_gateway:
         worker_key: ((/p-bosh/control-plane/worker_key))
-    release: concourse
-  - name: houdini-windows
-    provides: 
-      garden:
-        as: windows-garden
-    release: concourse
-  - name: baggageclaim-windows
-    provides: {baggageclaim-windows: {as: windows-baggageclaim}}
     release: concourse
   lifecycle: service
   name: windows-worker
