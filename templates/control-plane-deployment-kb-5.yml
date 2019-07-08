@@ -19,9 +19,6 @@ stemcells:
 - alias: default
   os: ubuntu-xenial
   version: ((stemcell-release))
-- alias: windows
-  os: "windows2019"
-  version: "2019.7"  
 addons:
 - jobs:
   - name: bosh-dns-aliases
