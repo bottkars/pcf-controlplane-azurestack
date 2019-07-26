@@ -7,7 +7,7 @@ releases:
 stemcells:
 - alias: default
   os: ubuntu-xenial
-  version: ((stemcell_version))
+  version: ((stemcell-release))
 
 variables:
 - name: minio_accesskey

@@ -183,7 +183,7 @@ control-minio-security-group: $($RG)-minio-security-group
   path: /instance_groups/name=web/vm_extensions?
   value: [control-plane-lb]
 - type: replace
-  path: /instance_groups/name=worker/instances
+  path: /instance_groups/name=worker-linux/instances
   value: $worker_instances  
 "   > "$local_control/vm-extensions-control.yml"
 
@@ -211,6 +211,7 @@ om --env "$HOME/om_$($RG).env" `
 external_url: https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
 persistent_disk_type: 204800
 vm_type: Standard_DS11_v2
+worker_vm_type: Standard_DS4_v2
 network_name: control-plane-subnet
 azs: ['Availability Sets']
 minio_accesskey: s3admin
@@ -222,19 +223,19 @@ uaa_ca_cert: |
   $fullchain
 " > "$local_control\bosh-vars.yml"
 
-bosh deploy -n -d control-plane "$($output_directory.FullName)/control-plane-0.0.31-rc.1.yml" `
-    --vars-file=$local_control\bosh-vars.yml `
-    --ops-file=$local_control\vm-extensions-control.yml
+
     bosh deploy -n -d control-plane ..\templates\control-plane-deployment-kb-5.yml `
     --vars-file=$local_control\bosh-vars.yml `
     --ops-file=$local_control\vm-extensions-control.yml `
-    --vars-file=C:\Users\AzurestackGuy\git\pcf-controlplane-azurestack\templates\versions.yml
+    --vars-file=..\templates\versions.yml
 
 bosh upload-release https://bosh.io/d/github.com/minio/minio-boshrelease
 
 bosh deploy -n -d minio-$($RG) ..\templates\minio.yml `
     --vars-file=$local_control\bosh-vars.yml `
-    --ops-file=$local_control\vm-extensions-minio.yml
+    --ops-file=$local_control\vm-extensions-minio.yml `
+    --vars-file=..\templates\versions.yml
+
 
 
 Write-Host "You can now login to https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME) with below admin credentials"
