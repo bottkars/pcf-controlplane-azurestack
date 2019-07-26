@@ -34,7 +34,7 @@ instance_groups:
   networks:
   - name: ((network_name))
   vm_type: ((vm_type))
-  persistent_disk: 207872
+  persistent_disk: 520000
   stemcell: default
 
 - name: tests
@@ -70,9 +70,10 @@ instance_groups:
     properties:
       script: |
         #!/bin/sh
-        mc mb minio/bucket1
-        mc mb minio/bucket2
-        mc mb minio/bucket3
+        mc mb minio/image
+        mc mb minio/installation
+        mc mb minio/pivnet.products
+        mc mb minio/tasks
   networks:
   - name: ((network_name))
   vm_type: ((vm_type))

@@ -1,14 +1,16 @@
 #requires -module pivposh
 param(
     [Parameter(Mandatory = $false)]	
-    [Validatescript( {Test-Path -Path $_ })]
-    $DIRECTOR_CONF_FILE="$HOME/director_control.json",
-    $worker_instances='1',
+    [Validatescript( { Test-Path -Path $_ })]
+    $DIRECTOR_CONF_FILE = "$HOME/director_control.json",
+    $worker_instances = '1',
     [Parameter(Mandatory = $false)]
     [switch]
     $DO_NOT_APPLY,
     [switch]
-    $NO_DOWNLOAD
+    $NO_DOWNLOAD,
+    [switch]
+    $AIRGAPPED
 )
 Push-Location $PSScriptRoot
 $director_conf = Get-Content $DIRECTOR_CONF_FILE | ConvertFrom-Json
@@ -51,83 +53,107 @@ $om_key = $om_key -join "`r`n"
 
 $OM_ENV_FILE = "$HOME/OM_$($director_conf.RG).env"   
 
-$TILE='p-control-plane-components'
-$branch='master'
+$TILE = 'p-control-plane-components'
+$branch = 'master'
 $downloaddir = $director_conf.downloaddir
-## create temp om env
-#om --env $HOME/om_$($RG).env bosh-env --ssh-private-key $HOME/opsman > $env:TEMP\bosh_init.ps1
-
-if (!$NO_DOWNLOAD.IsPresent)
-{$releases = Get-Content ../templates/versions.yml
-$releases= $releases -replace ":","="
-$releases= $releases -replace "`"",""  
-$releases=@"
+## create bosh env
+Invoke-Expression $(om --env $HOME/om_$($RG).env  bosh-env --ssh-private-key $HOME/opsman | Out-String)
+## getting releases from version table
+$releases = Get-Content ../templates/versions.yml
+$releases = $releases -replace ":", "="
+$releases = $releases -replace "`"", ""  
+$releases = @"
 $($releases -join "`r`n")
 "@ | ConvertFrom-StringData
 
-$downloaddir = "$downloaddir/controlplane"
-New-Item -ItemType Directory $downloaddir
+if ($AIRGAPPED.IsPresent) {
+    if (!$NO_DOWNLOAD.IsPresent) {
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/concourse/concourse-bosh-release?v=$($releases.'concourse-bosh-release')" `
--OutFile "$downloaddir/concourse-bosh-release-$($releases.'concourse-bosh-release').tgz"
+        $downloaddir = "$downloaddir/controlplane"
+        New-Item -ItemType Directory $downloaddir
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=$($releases.'uaa-release')" `
--OutFile "$downloaddir/uaa-release-$($releases.'uaa-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/concourse/concourse-bosh-release?v=$($releases.'concourse-bosh-release')" `
+            -OutFile "$downloaddir/concourse-bosh-release-$($releases.'concourse-bosh-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=$($releases.'bpm-release')" `
--OutFile "$downloaddir/bpm-release-$($releases.'bpm-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=$($releases.'uaa-release')" `
+            -OutFile "$downloaddir/uaa-release-$($releases.'uaa-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=$($releases.'bosh-dns-aliases-release')" `
--OutFile "$downloaddir/bosh-dns-aliases-release-$($releases.'bosh-dns-aliases-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=$($releases.'bpm-release')" `
+            -OutFile "$downloaddir/bpm-release-$($releases.'bpm-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=$($releases.'garden-runc-release')" `
--OutFile "$downloaddir/garden-runc-release-$($releases.'garden-runc-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=$($releases.'bosh-dns-aliases-release')" `
+            -OutFile "$downloaddir/bosh-dns-aliases-release-$($releases.'bosh-dns-aliases-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=$($releases.'postgres-release')" `
--OutFile "$downloaddir/postgres-release-$($releases.'postgres-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=$($releases.'garden-runc-release')" `
+            -OutFile "$downloaddir/garden-runc-release-$($releases.'garden-runc-release').tgz"
+
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=$($releases.'postgres-release')" `
+            -OutFile "$downloaddir/postgres-release-$($releases.'postgres-release').tgz"
 
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/pivotasl-cf/credhub-release?v=$($releases.'credhub-release')" `
--OutFile "$downloaddir/credhub-release-$($releases.'credhub-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/pivotasl-cf/credhub-release?v=$($releases.'credhub-release')" `
+            -OutFile "$downloaddir/credhub-release-$($releases.'credhub-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')" `
--OutFile "$downloaddir/windows-utilities-release-$($releases.'windows-utilities-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')" `
+            -OutFile "$downloaddir/windows-utilities-release-$($releases.'windows-utilities-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windowsfs-online-release?v=$($releases.'windowsfs-online-release')" `
--OutFile "$downloaddir/windowsfs-online-release-$($releases.'windowsfs-online-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windowsfs-online-release?v=$($releases.'windowsfs-online-release')" `
+            -OutFile "$downloaddir/windowsfs-online-release-$($releases.'windowsfs-online-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/winc-release?v=$($releases.'winc-release')" `
--OutFile "$downloaddir/winc-release-$($releases.'winc-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/winc-release?v=$($releases.'winc-release')" `
+            -OutFile "$downloaddir/winc-release-$($releases.'winc-release').tgz"
 
-invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-windows-bosh-release?v=$($releases.'garden-windows-bosh-release')" `
--OutFile "$downloaddir/garden-windows-bosh-release-$($releases.'garden-windows-bosh-release').tgz"
+        invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-windows-bosh-release?v=$($releases.'garden-windows-bosh-release')" `
+            -OutFile "$downloaddir/garden-windows-bosh-release-$($releases.'garden-windows-bosh-release').tgz"
+
+    }
+
+}
+else {
+  
+    bosh upload-release `
+        https://bosh.io/d/github.com/concourse/concourse-bosh-release?v=$($releases.'concourse-bosh-release')
+
+    bosh upload-release  `
+        https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=$($releases.'uaa-release')
+
+    bosh upload-release `
+        https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=$($releases.'bpm-release')
+
+    bosh upload-release `
+        https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=$($releases.'bosh-dns-aliases-release')
+
+    bosh upload-release `
+        https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=$($releases.'garden-runc-release')
+
+    bosh upload-release `
+        https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=$($releases.'credhub-release')
+
+    bosh upload-release  `
+        https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=$($releases.'postgres-release')
+
+    bosh upload-stemcell `
+        https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=$($releases.'stemcell-release')
+
+    bosh upload-release `
+        https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')
+
+    bosh upload-release `
+        https://bosh.io/d/github.com/cloudfoundry/windowsfs-online-release?v=$($releases.'windowsfs-online-release')
+  
+    bosh upload-release  `
+        https://bosh.io/d/github.com/cloudfoundry-incubator/winc-release?v=$($releases.'winc-release')
+  
+    bosh upload-release  `
+        https://bosh.io/d/github.com/cloudfoundry-incubator/garden-windows-bosh-release?v=$($releases.'garden-windows-bosh-release')
 
 }
 
 
 
 
-Invoke-Expression $(om --env $HOME/om_$($RG).env  bosh-env --ssh-private-key $HOME/opsman | Out-String)
-    bosh upload-release "$($downloaddir)/controlplane/*.tgz"
-
-
-
-$STEMCELL_VER="250.17"
-.\get-lateststemcells.ps1 -Families 250 -STEMRELEASE 17
-bosh upload-stemcell "$DOWNLOADDIR/stemcells/$STEMCELL_VER/bosh-stemcell-$($STEMCELL_VER)-azure-hyperv-ubuntu-xenial-go_agent.tgz"
-
-om --env $HOME/om_$($RG).env `
---request-timeout 7200 `
-download-product `
---pivnet-api-token $PIVNET_UAA_TOKEN `
---pivnet-file-glob "*.yml" `
---pivnet-product-slug $tile `
---product-version $PCF_VERSION `
---output-directory  "$($output_directory.FullName)"
-
-
 ##### creating releases, extensions 
-$local_control="$HOME/control/$RG"
+$local_control = "$HOME/control/$RG"
 New-Item -ItemType Directory $local_control -Force | Out-Null
 
 
@@ -167,17 +193,17 @@ control-minio-security-group: $($RG)-minio-security-group
 "   > "$local_control/vm-extensions-minio.yml"
 
 om --env "$HOME/om_$($RG).env" `
-  create-vm-extension  `
-  --config  "$local_control/vm-lb-extensions.yml"  `
-  --vars-file  "$local_control/vm-lb-extensions-vars.yml"
+    create-vm-extension  `
+    --config  "$local_control/vm-lb-extensions.yml"  `
+    --vars-file  "$local_control/vm-lb-extensions-vars.yml"
 
 om --env "$HOME/om_$($RG).env" `
-  create-vm-extension  `
-  --config  "$local_control/vm-lb-extensions-minio.yml"  `
-  --vars-file  "$local_control/vm-lb-extensions-minio-vars.yml"
+    create-vm-extension  `
+    --config  "$local_control/vm-lb-extensions-minio.yml"  `
+    --vars-file  "$local_control/vm-lb-extensions-minio-vars.yml"
 
 om --env "$HOME/om_$($RG).env" `
-  apply-changes 
+    apply-changes 
 
 
 
@@ -185,7 +211,6 @@ om --env "$HOME/om_$($RG).env" `
 external_url: https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
 persistent_disk_type: 204800
 vm_type: Standard_DS11_v2
-stemcell_version: $STEMCELL_VER
 network_name: control-plane-subnet
 azs: ['Availability Sets']
 minio_accesskey: s3admin
@@ -198,18 +223,22 @@ uaa_ca_cert: |
 " > "$local_control\bosh-vars.yml"
 
 bosh deploy -n -d control-plane "$($output_directory.FullName)/control-plane-0.0.31-rc.1.yml" `
-  --vars-file=$local_control\bosh-vars.yml `
-  --ops-file=$local_control\vm-extensions-control.yml
+    --vars-file=$local_control\bosh-vars.yml `
+    --ops-file=$local_control\vm-extensions-control.yml
+    bosh deploy -n -d control-plane ..\templates\control-plane-deployment-kb-5.yml `
+    --vars-file=$local_control\bosh-vars.yml `
+    --ops-file=$local_control\vm-extensions-control.yml `
+    --vars-file=C:\Users\AzurestackGuy\git\pcf-controlplane-azurestack\templates\versions.yml
 
 bosh upload-release https://bosh.io/d/github.com/minio/minio-boshrelease
 
 bosh deploy -n -d minio-$($RG) ..\templates\minio.yml `
-  --vars-file=$local_control\bosh-vars.yml `
-  --ops-file=$local_control\vm-extensions-minio.yml
+    --vars-file=$local_control\bosh-vars.yml `
+    --ops-file=$local_control\vm-extensions-minio.yml
 
 
 Write-Host "You can now login to https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME) with below admin credentials"
 Write-Host "once logged in, use `"fly --target plane login --concourse-url https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)`" to signin to flycli"
-(credhub.exe get /name:"/p-bosh/control-plane/uaa_users_admin" /j| ConvertFrom-Json).value
+(credhub.exe get /name:"/p-bosh/control-plane/uaa_users_admin" /j | ConvertFrom-Json).value
 
 Pop-Location
