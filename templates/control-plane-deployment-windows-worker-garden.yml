@@ -8,7 +8,7 @@ releases:
 - name: "garden-windows"
   version: ((garden_windows_release))
 - name: "winc"
-  version: ((winc_release))  
+  version: ((winc-release))  
 stemcells:
 - alias: windows
   os: "windows2019"

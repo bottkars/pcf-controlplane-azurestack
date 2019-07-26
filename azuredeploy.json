@@ -70,7 +70,7 @@
     },
     "opsManVHD": {
       "type": "string",
-      "defaultValue": "2.5.7-build.208",
+      "defaultValue": "2.6.5-build.173",
       "metadata": {
         "description": "Opsman VHD Name"
       }
