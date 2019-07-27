@@ -71,7 +71,7 @@ decryption-passphrase: $PIVNET_UAA_TOKEN
         Write-Host "Creating OM Environment $OM_ENV_FILE"
 
 
-$content = get-content "../templates/director_vars.yaml"
+$content = get-content "../templates/director_vars.yml"
 $content += "authentication: $($director_conf.Authentication)"
 $content += "default_security_group: $RG-bosh-deployed-vms-security-group"
 $content += "subscription_id: $((Get-AzureRmContext).Subscription.Id)"
@@ -98,7 +98,7 @@ $content += "infrastructure-subnet: $RG-virtual-network/$RG-infrastructure-subne
 $content += "plane-subnet: $RG-virtual-network/$RG-plane-subnet"
 $content += "availability_mode: availability_sets"
 $content += "singleton_availability_zone: 'null'"
-$content | Set-Content $HOME/director_vars.yaml
+$content | Set-Content $HOME/director_vars.yml
 # we go api for this next iteration
  om --env $HOME/om_$($director_conf.RG).env `
     configure-authentication `
@@ -117,7 +117,7 @@ Write-Host "Now Uploading OM Certs"
     deployed-products
 
  om --env $HOME/om_$($director_conf.RG).env `
-    configure-director --config "$PSScriptRoot/../templates/director_config.yaml" --vars-file "$HOME/director_vars.yaml"
+    configure-director --config "$PSScriptRoot/../templates/director_config.yml" --vars-file "$HOME/director_vars.yml"
 
 if (!$DO_NOT_APPLY.IsPresent) {
      om --env $HOME/om_$($director_conf.RG).env apply-changes

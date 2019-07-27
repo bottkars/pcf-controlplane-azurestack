@@ -4,7 +4,7 @@ param(
     [Validatescript( {Test-Path -Path $_ })]
     $DIRECTOR_CONF_FILE="$HOME/director_control.json",
     [Parameter(Mandatory = $false)]
-    [ValidateSet('170', '250','97','3586','3541')]
+    [ValidateSet('315','170', '250','97','3586','3541')]
     [string[]]$Families= '170',
     [string]$STEMRELEASE,
     [Parameter(Mandatory = $false)]
