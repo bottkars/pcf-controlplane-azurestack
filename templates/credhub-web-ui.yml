@@ -1,0 +1,48 @@
+---
+name: credhub-webui
+
+stemcells:
+- os: ubuntu-trusty
+  alias: default
+  version: latest
+
+instance_groups:
+- name: web
+  instances: 1
+  stemcell: default
+  azs: [z1]
+  vm_type: default
+  persistent_disk_type: default
+  networks:
+  - name: default
+  jobs:
+  - name: credhub-webui
+    release: credhub-webui
+    properties:
+      credhub_server: "((credhub_server))"
+      ui_url: "https://((credhub_webui_hostname)):8443"
+      client_id: ((credhub_client_id))
+      client_secret: ((credhub_client_secret))
+      ssl:
+        certificate: ((credhub_webui_tls.certificate))
+        key: ((credhub_webui_tls.private_key))
+
+variables:
+- name: credhub_webui_tls
+  type: certificate
+  options:
+    self_sign: true
+    common_name: ((credhub_webui_hostname))
+    alternative_names: [localhost]
+
+update:
+  canaries: 1
+  max_in_flight: 3
+  canary_watch_time: 30000-600000
+  update_watch_time: 5000-600000
+
+releases:
+- name: credhub-webui
+  version: 0.0.5
+  sha1: 0e05c6c7bd0d50bfa214142b16f3c8e333ec68e2
+  url: https://github.com/shreddedbacon/credhub-webui-boshrelease/releases/download/v0.0.5/credhub-webui-boshrelease-0.0.5.tgz
