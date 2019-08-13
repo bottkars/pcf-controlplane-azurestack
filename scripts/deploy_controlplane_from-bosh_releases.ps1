@@ -133,8 +133,8 @@ else {
         https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=$($releases.'postgres-release')
 
     bosh upload-stemcell `
-        https://s3.amazonaws.com/bosh-core-stemcells/$($releases.'stemcell-release')/bosh-stemcell-$($releases.'stemcell-release')-azure-hyperv-ubuntu-xenial-go_agent.tgz
-    
+        https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=$($releases.'stemcell-release')
+
     bosh upload-release `
         https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')
 
