@@ -26,7 +26,7 @@ Run the [prepare script](prepare_utils.ps1) to download latest versions of
 
 Create an env.json following [readme](env.json.example)
 
-
+Install VCredist for OpenSSL to run Properly !
 
 run
 ```Powershell
