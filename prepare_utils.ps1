@@ -10,6 +10,9 @@
 .EXAMPLE
 #>
 #requires -version 3
+param(
+[switch]$install_openssl
+)
 function Receive-LABOpenSSL
 {
 [CmdletBinding(DefaultParametersetName = "1",
@@ -88,27 +91,28 @@ Write-Host "installing module pivposh"
 Install-Module pivposh -scope CurrentUser -Force
 Write-Host "installing om-cli"
 Install-Script Download-Om -Force -Scope CurrentUser -MinimumVersion 1.1
-$OM = Download-Om -DownloadDir "$($HOME)/om" -OmRelease 1.1.0
+$OM = Download-Om -DownloadDir "$($HOME)/om" -OmRelease 3.1.0
 Write-Host "Installing cf-cli Installer"
 Install-Script install-cf-cli -Scope CurrentUser
-Install-cf-cli.ps1 -CLIRelease '6.43.0' -DownloadDir "$HOME\Downloads" 
+Install-cf-cli.ps1 -CLIRelease '6.46.0' -DownloadDir "$HOME\Downloads" 
 Write-Host "Installing cf-uaac Installer"
 Install-Script install-cf-uaac -Scope CurrentUser
 Install-cf-uaac.ps1 
 
 Write-Host "Installing BoSH Installer"
 Install-Script install-bosh -Scope CurrentUser
-Install-bosh.ps1 -BoshRelease 'v5.5.1' -DownloadDir "$HOME/bosh" 
+Install-bosh.ps1 -BoshRelease 'v6.0.0' -DownloadDir "$HOME/bosh" 
 Write-Host "Installing CredHUB Installer"
 Install-Script install-credhub-cli -Scope CurrentUser
-Install-credhub-cli.ps1  -CredhubRelease '2.4.0' -DownloadDir "$HOME/credhub"
+Install-credhub-cli.ps1  -CredhubRelease '2.5.2' -DownloadDir "$HOME/credhub"
 
-
-Write-Host "Installing OpenSSL"  
-$OpenSSL=Receive-LABOpenSSL -Destination "$($HOME)/Downloads" -OpenSSL_Ver 1_1_0 
-$OpenSSLArgs = '/silent'
-$Setuppath = "$($HOME)/Downloads/$($OpenSSL.Filename)"
-unblock-file $Setuppath
-Start-Process -FilePath $Setuppath -ArgumentList $OpenSSLArgs -PassThru -Wait
-
-
+if ($install_openssl.IsPresent)
+{
+    Write-Host "Installing OpenSSL"  
+    $OpenSSL=Receive-LABOpenSSL -Destination "$($HOME)/Downloads" -OpenSSL_Ver 1_1_0 
+    $OpenSSLArgs = '/silent'
+    $Setuppath = "$($HOME)/Downloads/$($OpenSSL.Filename)"
+    unblock-file $Setuppath
+    Start-Process -FilePath $Setuppath -ArgumentList $OpenSSLArgs -PassThru -Wait
+}
+##>

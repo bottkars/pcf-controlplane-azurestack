@@ -42,6 +42,7 @@ $CA_CERT=credhub get /name:'/p-bosh/control-plane/control-plane-tls' -k certific
 credhub login /server:$CREDHUB_URL /client-name:$CLIENT_NAME /client-secret:$credhub_password /skip-tls-validation
 
 
+<## we need to powershell from here :-)
 credhub set /name:'/concourse/main/$($RG)/tenant-id' /type:value --value ${TF_VAR_tenant_id}
 credhub set /name:"/concourse/main/$($RG)/client-id" /type:value --value $($env_vars.AZURE_CLIENT_ID)
 credhub set /name:'/concourse/main/$($RG)/client-secret' /type:value --value ${TF_VAR_client_secret}
@@ -56,3 +57,4 @@ credhub set /name:'/concourse/main/$($RG)/resource-group' /type:value --value $(
 credhub set /name:'/concourse/main/$($RG)/foundation' /type:value --value $($RG)
 credhub set /name:'/concourse/main/$($RG)/location' /type:value --value ${LOCATION}
 credhub set /name:'/concourse/main/$($RG)/ops-manager-dns' /type:value --value $(terraform output ops_manager_dns)
+##>
