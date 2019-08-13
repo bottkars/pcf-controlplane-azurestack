@@ -232,8 +232,6 @@ uaa_ca_cert: |
 
 }
 
-
-
 bosh deploy -n -d control-plane ..\templates\control-plane-deployment-kb-5.yml `
     --vars-file=$local_control\bosh-vars.yml `
     --ops-file=$local_control\vm-extensions-control.yml `
