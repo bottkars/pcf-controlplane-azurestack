@@ -25,8 +25,8 @@ Write-Verbose $PCF_SUBDOMAIN_NAME
 write-verbose "Creating CSR"
 C:\OpenSSL-Win64\bin\openssl req -new -x509 -nodes -sha256 `
 -newkey rsa:$KEY_BITS -days $DAYS `
--keyout "$($HOME)/$($DOMAIN).ca.key.pkcs8" `
--out "$($HOME)/$($DOMAIN).ca.crt" -config "$($HOME)/certconfig.conf"
+-keyout "$($HOME)\$($DOMAIN).ca.key.pkcs8" `
+-out "$($HOME)\$($DOMAIN).ca.crt" -config "$($HOME)\certconfig.conf"
 
 Write-Verbose "Creating CA Key"
 C:\OpenSSL-Win64\bin\openssl rsa `
