@@ -1,6 +1,5 @@
 ﻿#Requires -Modules @{ModuleName="pivposh";ModuleVersion="0.5"}
 #requires -module NetTCPIP
-#requires -module AzureRM.SQL
 param(
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]

@@ -15,3 +15,6 @@ Clone into this repo
 ```Powershell
 git clone https://github.com/bottkars/pcf-controlplane-azurestack.git
 ```
+
+
+Create an env.json following [readme](env.json.example)
