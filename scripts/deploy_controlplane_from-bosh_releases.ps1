@@ -60,6 +60,8 @@ $branch = 'master'
 $downloaddir = $director_conf.downloaddir
 ## create bosh env
 Invoke-Expression $(om --env $HOME/om_$($RG).env  bosh-env --ssh-private-key $HOME/opsman | Out-String)
+##### creating releases, extensions 
+$local_control = "$HOME/control/$RG"
 ## getting releases from version table
 $releases = Get-Content ../templates/versions.yml
 $releases = $releases -replace ":", "="
@@ -158,8 +160,7 @@ if (!$redeploy)
 
 
 
-##### creating releases, extensions 
-$local_control = "$HOME/control/$RG"
+
 New-Item -ItemType Directory $local_control -Force | Out-Null
 
 
