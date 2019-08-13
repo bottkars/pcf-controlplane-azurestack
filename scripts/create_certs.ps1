@@ -30,8 +30,8 @@ C:\OpenSSL-Win64\bin\openssl req -new -x509 -nodes -sha256 `
 
 Write-Verbose "Creating CA Key"
 C:\OpenSSL-Win64\bin\openssl rsa `
- -in "$($HOME)/$($DOMAIN).ca.key.pkcs8"`
- -out "$($HOME)/$($DOMAIN).ca.key"
+ -in "$($HOME)\$($DOMAIN).ca.key.pkcs8"`
+ -out "$($HOME)\$($DOMAIN).ca.key"
 
 "
   [ req ]
