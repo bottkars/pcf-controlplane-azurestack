@@ -10,9 +10,7 @@
 .EXAMPLE
 #>
 #requires -version 3
-param(
-[switch]$install_openssl
-)
+
 function Receive-LABOpenSSL
 {
 [CmdletBinding(DefaultParametersetName = "1",
@@ -106,13 +104,10 @@ Write-Host "Installing CredHUB Installer"
 Install-Script install-credhub-cli -Scope CurrentUser
 Install-credhub-cli.ps1  -CredhubRelease '2.5.2' -DownloadDir "$HOME/credhub"
 
-if ($install_openssl.IsPresent)
-{
-    Write-Host "Installing OpenSSL"  
-    $OpenSSL=Receive-LABOpenSSL -Destination "$($HOME)/Downloads" -OpenSSL_Ver 1_1_0 
-    $OpenSSLArgs = '/silent'
-    $Setuppath = "$($HOME)/Downloads/$($OpenSSL.Filename)"
-    unblock-file $Setuppath
-    Start-Process -FilePath $Setuppath -ArgumentList $OpenSSLArgs -PassThru -Wait
-}
-##>
+
+Write-Host "Installing OpenSSL"  
+$OpenSSL=Receive-LABOpenSSL -Destination "$($HOME)/Downloads" -OpenSSL_Ver 1_1_0 
+$OpenSSLArgs = '/silent'
+$Setuppath = "$($HOME)/Downloads/$($OpenSSL.Filename)"
+unblock-file $Setuppath
+Start-Process -FilePath $Setuppath -ArgumentList $OpenSSLArgs -PassThru -Wait

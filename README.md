@@ -18,3 +18,9 @@ git clone https://github.com/bottkars/pcf-controlplane-azurestack.git
 
 
 Create an env.json following [readme](env.json.example)
+
+run
+```Powershell
+ .\deploy_pcf-opsman.ps1 -location sc2 -dnsdomain azurestack-rd.cf-app.com -TESTONLY
+ ```
+ ( replace location and dnsdomain with your values)
