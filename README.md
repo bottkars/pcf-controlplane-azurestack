@@ -16,8 +16,17 @@ Clone into this repo
 git clone https://github.com/bottkars/pcf-controlplane-azurestack.git
 ```
 
+Run the [prepare script](prepare_utils.ps1) to download latest versions of
+ - om cli
+ - cf cli
+ - uaac including ruby env
+ - credhub cli 
+ - bosh cli
+ - openssl
 
 Create an env.json following [readme](env.json.example)
+
+
 
 run
 ```Powershell
