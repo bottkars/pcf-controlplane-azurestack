@@ -73,7 +73,7 @@ param(
         '2.6.8-build-192'
 
     )]
-    $opsmanager_image = '2.6.6-build.179',
+    $opsmanager_image = '2.6.8-build.192',
     # The name of the Ressource Group we want to Deploy to.
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
