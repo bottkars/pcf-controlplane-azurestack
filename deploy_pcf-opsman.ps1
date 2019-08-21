@@ -68,7 +68,9 @@ param(
         '2.5.5-build.194',
         '2.5.7-build.208',
         '2.6.5-build.173',
-        '2.6.6-build-179'
+        '2.6.6-build-179',
+        '2.6.7-build-187',
+        '2.6.8-build-192'
 
     )]
     $opsmanager_image = '2.6.6-build.179',
