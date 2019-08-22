@@ -102,7 +102,7 @@ param(
     $ImageStorageAccount = "opsmanagerimage", 
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
-    [ValidateSet('AzureAD','ADFS')]
+    [ValidateSet('AzureAD', 'ADFS')]
     [ValidateNotNullOrEmpty()]
     $Authentication = "AzureAD",
     # The Containername we will host the Images for Opsmanager in
@@ -146,6 +146,10 @@ param(
     [switch]$force_product_download,
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
+    [switch]$nopupload,
+
+    [Parameter(ParameterSetName = "install", Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
     [switch]$TESTONLY,
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
@@ -161,12 +165,12 @@ param(
     $DO_NOT_CONFIGURE_OPSMAN,
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet('westeurope', 'eastus','westus','southeastasia')]
+    [ValidateSet('westeurope', 'eastus', 'westus', 'southeastasia')]
     $OpsManSeedLocation = "westeurope",
     # The Azure Location to Download Opsman from
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet('testing', '2.3','2.4','2.5')]
+    [ValidateSet('testing', '2.3', '2.4', '2.5')]
     $branch = "2.5"
 )
 
@@ -368,7 +372,7 @@ $StopWatch_deploy = New-Object System.Diagnostics.Stopwatch
 $StopWatch_prepare.Start()
 if (!$OpsmanUpdate) {
     Write-Host "==>Creating ResourceGroups $resourceGroup" -nonewline   
-   New-AzureRmResourceGroup -Name $resourceGroup -Location $location -Force -ErrorAction SilentlyContinue | Out-Null
+    New-AzureRmResourceGroup -Name $resourceGroup -Location $location -Force -ErrorAction SilentlyContinue | Out-Null
     Write-Host -ForegroundColor green "[done]"
     Write-Host "==>Assigning Contributer Role for /subscriptions/$((Get-AzureRmContext).Subscription.Id) to client_id $($env_vars.client_id)" -nonewline   
     New-AzureRmRoleAssignment -Scope "/subscriptions/$((Get-AzureRmContext).Subscription.Id)" `
@@ -409,7 +413,7 @@ if (!$OpsmanUpdate) {
             }    
             $new_acsaccount | Set-AzureRmCurrentStorageAccount
             Write-Host "Creating Container `"$image_containername`" in $($new_acsaccount.StorageAccountName)"
-            New-AzureStorageContainer -Name $image_containername -Permission blob |  Out-Null
+            New-AzureStorageContainer -Name $image_containername -Permission blob | Out-Null
         }
         else {
             write-host "Scenario currently not supported"
@@ -430,6 +434,7 @@ if ($Environment -eq 'AzureStack') {
     Write-Host -ForegroundColor Green "[using $transfer_type for transfer]"
     $file = split-path -Leaf $opsmanager_uri
     $localPath = "$Downloadpath/$file"
+    Write-Verbose $opsmanager_uri
     if (!(Test-Path $localPath) -and !($DO_NOT_DOWNLOAD.IsPresent)) {
         switch ($transfer_type) {
             ".Net" {  
@@ -440,23 +445,25 @@ if ($Environment -eq 'AzureStack') {
             }
         }
     }  
-    try {
-        $new_arm_vhd = Add-AzureRmVhd -ResourceGroupName $image_rg -Destination $urlOfUploadedImageVhd `
-            -LocalFilePath $localPath -OverWrite:$false -ErrorAction Stop
-    }
-    catch [InvalidOperationException] {
-        Write-Warning "Image already exists for $opsManVHD, not overwriting"
-    }
-    <#
+    if (!$nopupload.ispresent) {
+        try {
+            $new_arm_vhd = Add-AzureRmVhd -ResourceGroupName $image_rg -Destination $urlOfUploadedImageVhd `
+                -LocalFilePath $localPath -OverWrite:$false -ErrorAction Stop
+        }
+        catch [InvalidOperationException] {
+            Write-Warning "Image already exists for $opsManVHD, not overwriting"
+        }
+    
+        <#
     catch [CloudException] {
         Write-Warning " we make and educated guess that we use in-region copy"
     }#>
-    catch {
-        Write-Warning "Unknown Exception"
-        $_
-        break
+        catch {
+            Write-Warning "Unknown Exception"
+            $_
+            break
+        }
     }
-
 }
 else {
     # Blob Copy routine
@@ -523,7 +530,7 @@ if ( $useManagedDisks.IsPresent) {
 else {
     $ManagedDisks = "no" 
 }
-$parameters = @{}
+$parameters = @{ }
 $parameters.Add("SSHKeyData", $OPSMAN_SSHKEY)
 $parameters.Add("opsManFQDNPrefix", $opsManFQDNPrefix)
 $parameters.Add("opsManVHD", $opsManVHD)
@@ -590,8 +597,8 @@ if (!$OpsmanUpdate) {
             infrastructure_gateway   = $infrastructure_gateway
             downloaddir              = $downloadpath
             force_product_download   = $force_product_download.IsPresent.ToString()
-            branch                  = $branch
-            Authentication          = $Authentication
+            branch                   = $branch
+            Authentication           = $Authentication
         } | ConvertTo-Json
         $JSon | Set-Content $DIRECTOR_CONF_FILE
         Write-Host "now we are going to try and configure OpsManager"
