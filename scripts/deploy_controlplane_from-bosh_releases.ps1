@@ -130,6 +130,7 @@ if (!$redeploy.IsPresent) {
 
 
             bosh upload-release  "$downloaddir/credhub-release-$($releases.'credhub-release').tgz"
+            bosh upload-stemcell "$downloaddir/bosh-stemcell-($releases.'stemcell-release')-azure-hyperv-ubuntu-xenial-go_agent.tgz"
 
             #    invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')" `
             #        -OutFile "$downloaddir/windows-utilities-release-$($releases.'windows-utilities-release').tgz"
