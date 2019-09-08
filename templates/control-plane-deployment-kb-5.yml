@@ -167,7 +167,7 @@ instance_groups:
         - name: uaa
           password: ((uaa_db_password))
           tag: admin
-        tls_enabled: true
+        tls: enabled
     provides: {}
     release: uaa
   - consumes: {}
