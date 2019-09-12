@@ -73,6 +73,8 @@ instance_groups:
         role:
           name: concourse
           password: ((postgres_password))
+      lets_encrypt:
+        enabled: ((use_le))
       tls_bind_port: 443
       tls_cert: ((control-plane-tls.certificate))
       tls_key: ((control-plane-tls.private_key))
