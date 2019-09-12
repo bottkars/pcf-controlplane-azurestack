@@ -1,6 +1,6 @@
 ﻿garden-runc-release: "1.19.3"
 credhub-release: "2.5.4"
-concourse-bosh-release: "5.5.0"
+concourse-bosh-release: "5.5.1"
 uaa-release: "74.1.0"
 postgres-release: "39"
 bpm-release: "1.1.3"
