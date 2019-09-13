@@ -171,19 +171,13 @@ if (!$redeploy.IsPresent) {
             bosh upload-stemcell `
                 https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=$($releases.'stemcell-release')
     
-            #        bosh upload-release `
-            #            https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')
-            #    
-            #        bosh upload-release `
-            #            https://bosh.io/d/github.com/cloudfoundry/windowsfs-online-release?v=$($releases.'windowsfs-online-release')
-            #      
-            #        bosh upload-release `
-            #            https://bosh.io/d/github.com/cloudfoundry-incubator/winc-release?v=$($releases.'winc-release')
-            #      
-            #        bosh upload-release `
-            #            https://bosh.io/d/github.com/cloudfoundry-incubator/garden-windows-bosh-release?v=$($releases.'garden-windows-bosh-release')
-    
+            bosh upload-release git+https://github.com/vito/telegraf-boshrelease
+            
+            bosh upload-release git+https://github.com/vito/telegraf-agent-boshrelease
 
+            bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-release')
+
+            bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
         }
     }
 
