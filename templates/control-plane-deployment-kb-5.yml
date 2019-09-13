@@ -301,18 +301,18 @@ instance_groups:
     name: influxdb
     properties:
       influxdb:
-        database:
-        - concourse_tsdb
+        databases:
+        - ((influxdb_dbname))
         users:
-        - name: reader
+        - name: ((influxdb.reader))
           password: ((influxdb.reader_password))
           privilege: read
           database: concourse_tsdb
-        - name: writer
+        - name: ((influxdb.writer))
           password: ((influxdb.writer_password))
           privilege: write
           database: concourse_tsdb
-        - name: administrator
+        - name: ((influxdb.administrator))
           password: ((infliuxdb.admin_password))
           privilege: admin
         retention_policy_rules:
