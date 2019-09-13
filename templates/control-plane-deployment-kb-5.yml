@@ -299,6 +299,12 @@ instance_groups:
   jobs:
   - release: influxdb
     name: influxdb
+    - name: influxdb
+      type: influxdb
+      properties:
+        - influxdb.database
+        - influxdb.user
+        - influxdb.password
     properties:
       influxdb:
         databases:
@@ -321,6 +327,7 @@ instance_groups:
             retention_policies:
             - name: autogen
               duration: 14d 
+
   stemcell: default
   update:
     max_in_flight: 1
