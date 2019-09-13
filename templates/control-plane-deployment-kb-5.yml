@@ -296,7 +296,6 @@ instance_groups:
 - azs: ((azs))
   instances: 1
   name: influxdb
-  release: influxdb
   jobs:
   - name: influxdb
     release: influxdb
