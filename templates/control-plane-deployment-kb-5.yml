@@ -325,6 +325,12 @@ instance_groups:
   update:
     max_in_flight: 1
   vm_type: ((worker_vm_type))
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: ((network_name))
+
 
 update:
   canaries: 1
