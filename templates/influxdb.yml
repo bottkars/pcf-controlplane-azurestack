@@ -1,8 +1,8 @@
 - type: replace
   path: /instance_groups/name=web/jobs/name=web/properties/influxdb?
   value:
-    url: ((influxdb_url))
-    database: ((influxdb_database))
-    username: ((influxdb.write_username))
+    url: ((influxdb.url))
+    database: ((influxdb.dbname))
+    username: ((influxdb.writer_username))
     password: ((influxdb.writer_password))
     insecure_skip_verify: true

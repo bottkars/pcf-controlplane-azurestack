@@ -1,4 +1,32 @@
 ---
+## Anchors
+
+telegraf:
+  <<: &influxdb_properties
+    influxdb:
+      database: concourse
+      url: http://influxdb.service.cf.internal:8086
+      username: ((influxdb.writer_username))
+      password: ((influxdb.writer_password))
+  jobs:
+  # captures host metrics
+  - <<: &telegraf_job
+      name: telegraf
+      release: telegraf
+      properties:
+        <<: *influxdb_properties
+  # captures per-process metrics
+  # https://github.com/influxdata/telegraf/blob/4d3519756c278c90d1207518bcc97a10c28555f3/plugins/inputs/procstat/README.md
+  - <<: &telegraf_agent_job
+      name: telegraf-agent
+      release: telegraf-agent
+      properties:
+        <<: *influxdb_properties
+        inputs:
+          procstat:
+            pattern: 'bin/concourse|bin/baggageclaim|garden-properties|bin/runc|resource/check|gzip|erlc|beam.smp|ct_run|dockerd|telegraf|postgres'
+
+
 name: control-plane
 releases:
 - name: "concourse"
@@ -17,6 +45,12 @@ releases:
   version: ((bosh-dns-aliases-release))
 - name: bpm
   version: ((bpm-release))
+- name: grafana  
+  version: ((grafana-release))
+- name: telegraf
+  version: ((telegraf-release))
+- name: telegraf-agent
+  version: ((telegraf-agent-release))      
 stemcells:
 - alias: default
   os: ubuntu-xenial
@@ -33,6 +67,13 @@ addons:
           instance_group: db
           network: ((network_name))
           query: '*'
+      - domain: influxdb.service.cf.internal
+        targets:
+        - deployment: control-plane
+          domain: bosh
+          instance_group: influxdb
+          network: ((network_name))
+          query: '*'          
     release: bosh-dns-aliases
   name: bosh-dns-aliases  
 instance_groups:
@@ -219,6 +260,36 @@ instance_groups:
       tls_cert: ((control-plane-tls.certificate))
       tls_key: ((control-plane-tls.private_key))
       token_signing_key: ((token_signing_key))    
+  - <<: *telegraf_job
+  - <<: *telegraf_agent_job
+  - consumes: {}
+    name: grafana
+    release: grafana
+    properties:
+      grafana:
+        admin_password: ((grafana.password))
+        admin_username: admin
+        dashboards:
+        - name: Concourse
+          content: ((grafana_dashboard))
+        datasources:
+        - name: concourse
+          database_name: ((influxdb.dbname))
+          url: http://influxdb.service.cf.internal:8086
+          database_type: influxdb
+          user: ((influxdb.reader_username))
+          password: ((influxdb.reader_password))
+        - name: telegraf
+          database_name: ((influxdb.dbname))
+          url: http://influxdb.service.cf.internal:8086
+          database_type: influxdb
+          user: ((influxdb.reader_username))
+          password: ((influxdb.reader_password))
+        listen_port: 3000
+        root_url: ((external_url))
+        ssl:
+          cert: ((control-plane-tls.certificate))
+          key: ((control-plane-tls.private_key))
   lifecycle: service
   name: web
   networks:
@@ -282,6 +353,8 @@ instance_groups:
         allow_host_access: true
         listen_address: 0.0.0.0:7777
         listen_network: tcp
+  - <<: *telegraf_job
+  - <<: *telegraf_agent_job      
   lifecycle: service
   name: worker-linux
   networks:
@@ -293,6 +366,7 @@ instance_groups:
   update:
     max_in_flight: 1
   vm_type: ((worker_vm_type))
+  
 - azs: ((azs))
   instances: 1
   name: influxdb
@@ -301,19 +375,18 @@ instance_groups:
     name: influxdb
     properties:
       influxdb:
-        databases:
-        - ((influxdb_dbname))
+        database: ((influxdb.dbname))
         users:
-        - name: ((influxdb.reader))
+        - name: ((influxdb.reader_username))
           password: ((influxdb.reader_password))
           privilege: read
-          database: concourse_tsdb
-        - name: ((influxdb.writer))
+          database: ((influxdb.dbname))
+        - name: ((influxdb.writer_username))
           password: ((influxdb.writer_password))
           privilege: write
-          database: concourse_tsdb
-        - name: ((influxdb.administrator))
-          password: ((infliuxdb.admin_password))
+          database: ((influxdb.dbname))
+        - name: ((influxdb.administrator_username))
+          password: ((influxdb.administrator_password))
           privilege: admin
         retention_policy_rules:
           example:
