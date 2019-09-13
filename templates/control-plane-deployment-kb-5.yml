@@ -394,11 +394,10 @@ instance_groups:
             retention_policies:
             - name: autogen
               duration: 14d 
-              
   stemcell: default
   update:
     max_in_flight: 1
-  vm_type: ((worker_vm_type))
+  vm_type: ((vm_type))
   networks:
   - default:
     - dns
