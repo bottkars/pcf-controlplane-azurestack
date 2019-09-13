@@ -293,45 +293,6 @@ instance_groups:
   update:
     max_in_flight: 1
   vm_type: ((worker_vm_type))
-- azs: ((azs))
-  instances: 1
-  name: influxdb
-  jobs:
-  - release: influxdb
-    name: influxdb
-    properties:
-      influxdb:
-        databases:
-        - concourse_tsdb
-        users:
-        - name: reader
-          password: ((influxdb.reader_password))
-          privilege: read
-          database: concourse_tsdb
-        - name: writer
-          password: ((influxdb.writer_password))
-          privilege: write
-          database: concourse_tsdb
-        - name: administrator
-          password: ((infliuxdb.admin_password))
-          privilege: admin
-        retention_policy_rules:
-          example:
-            default: autogen
-            retention_policies:
-            - name: autogen
-              duration: 14d 
-  stemcell: default
-  update:
-    max_in_flight: 1
-  vm_type: ((worker_vm_type))
-  networks:
-  - default:
-    - dns
-    - gateway
-    name: ((network_name))
-
-
 update:
   canaries: 1
   canary_watch_time: 30000-600000
