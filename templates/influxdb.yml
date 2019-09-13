@@ -1,7 +1,7 @@
 - type: replace
   path: /instance_groups/name=web/jobs/name=web/properties/influxdb?
   value:
-    url: ((influxdb.url))
+    url: http://influxdb.service.cf.internal:8086
     database: ((influxdb.dbname))
     username: ((influxdb.writer_username))
     password: ((influxdb.writer_password))
