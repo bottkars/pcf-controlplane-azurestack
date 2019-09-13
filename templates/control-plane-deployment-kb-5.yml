@@ -297,7 +297,7 @@ instance_groups:
   instances: 1
   name: influxdb
   jobs:
-  - name: influxdb
+    name: influxdb
     release: influxdb
     properties:
       influxdb:
