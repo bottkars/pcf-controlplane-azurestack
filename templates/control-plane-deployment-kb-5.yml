@@ -297,7 +297,6 @@ instance_groups:
   instances: 1
   name: influxdb
   release: influxdb
-  instances: 1
   jobs:
   - name: influxdb
     release: influxdb
@@ -323,10 +322,10 @@ instance_groups:
             retention_policies:
             - name: autogen
               duration: 14d 
-    stemcell: default
-    update:
-      max_in_flight: 1
-    vm_type: ((worker_vm_type))
+  stemcell: default
+  update:
+    max_in_flight: 1
+  vm_type: ((worker_vm_type))
 
 update:
   canaries: 1
