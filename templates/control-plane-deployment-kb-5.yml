@@ -286,7 +286,7 @@ instance_groups:
           user: ((influxdb.reader_username))
           password: ((influxdb.reader_password))
         listen_port: 3000
-        root_url: ((external_url))
+        root_url: ((external_url)):3000
         ssl:
           cert: ((control-plane-tls.certificate))
           key: ((control-plane-tls.private_key))
