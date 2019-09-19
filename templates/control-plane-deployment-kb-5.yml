@@ -280,7 +280,6 @@ instance_groups:
           content: ((grafana_dashboard_response_times))  
         - name: Concourse Overview
           content: ((grafana_dashboard_overview))  
-
         datasources:
         - name: concourse
           database_name: ((influxdb.dbname))
