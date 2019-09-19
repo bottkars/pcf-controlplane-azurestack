@@ -272,6 +272,15 @@ instance_groups:
         dashboards:
         - name: Concourse
           content: ((grafana_dashboard))
+        - name: Concourse Builds
+          content: ((grafana_dashboard_builds))  
+        - name: Concourse Golang
+          content: ((grafana_dashboard_golang))  
+        - name: Concourse Response Tiomes
+          content: ((grafana_dashboard_response_times))  
+        - name: Concourse Overview
+          content: ((grafana_dashboard_overview))  
+
         datasources:
         - name: concourse
           database_name: ((influxdb.dbname))
