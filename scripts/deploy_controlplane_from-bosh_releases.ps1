@@ -183,24 +183,24 @@ if (!$redeploy.IsPresent) {
 
 
 
+    if (!$DO_NOT_APPLY.ispresent) {
+        New-Item -ItemType Directory $local_control -Force | Out-Null
 
-    New-Item -ItemType Directory $local_control -Force | Out-Null
 
-
-    "control-plane-lb: $($RG)-web-lb
+        "control-plane-lb: $($RG)-web-lb
 control-plane-security-group: $($RG)-plane-security-group
 " > "$local_control/vm-lb-extensions-vars.yml"
 
 
 
-    "vm-extension-config:
+        "vm-extension-config:
   name: control-plane-lb
   cloud_properties:
    security_group: ((control-plane-security-group))
    load_balancer: ((control-plane-lb))
 "  > "$local_control/vm-lb-extensions.yml"
 
-    "- type: replace
+        "- type: replace
   path: /instance_groups/name=web/vm_extensions?
   value: [control-plane-lb]
 - type: replace
@@ -210,41 +210,41 @@ control-plane-security-group: $($RG)-plane-security-group
 
 
 
-    om --env "$HOME/om_$($RG).env" `
-        create-vm-extension  `
-        --config  "$local_control/vm-lb-extensions.yml"  `
-        --vars-file  "$local_control/vm-lb-extensions-vars.yml"
+        om --env "$HOME/om_$($RG).env" `
+            create-vm-extension  `
+            --config  "$local_control/vm-lb-extensions.yml"  `
+            --vars-file  "$local_control/vm-lb-extensions-vars.yml"
 
-    if ($use_minio.IsPresent) {
-        bosh upload-release `
-            https://bosh.io/d/github.com/minio/minio-boshrelease
+        if ($use_minio.IsPresent) {
+            bosh upload-release `
+                https://bosh.io/d/github.com/minio/minio-boshrelease
 
-        "control-minio-lb: $($RG)-minio-lb
+            "control-minio-lb: $($RG)-minio-lb
         control-minio-security-group: $($RG)-minio-security-group
         " > "$local_control/vm-lb-extensions-minio-vars.yml"
         
-        "vm-extension-config:
+            "vm-extension-config:
           name: control-minio-lb
           cloud_properties:
            security_group: ((control-minio-security-group))
            load_balancer: ((control-minio-lb))
         "  > "$local_control/vm-lb-extensions-minio.yml"
         
-        "- type: replace
+            "- type: replace
         path: /instance_groups/name=minio/vm_extensions?
         value: [control-minio-lb]
         "   > "$local_control/vm-extensions-minio.yml"
 
 
+            om --env "$HOME/om_$($RG).env" `
+                create-vm-extension  `
+                --config  "$local_control/vm-lb-extensions-minio.yml"  `
+                --vars-file  "$local_control/vm-lb-extensions-minio-vars.yml"
+        }
         om --env "$HOME/om_$($RG).env" `
-            create-vm-extension  `
-            --config  "$local_control/vm-lb-extensions-minio.yml"  `
-            --vars-file  "$local_control/vm-lb-extensions-minio-vars.yml"
-    }
-    om --env "$HOME/om_$($RG).env" `
-        apply-changes 
+            apply-changes 
 
-    "---
+        "---
 external_url: https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)
 persistent_disk_type: 204800
 vm_type: Standard_DS11_v2
@@ -260,17 +260,18 @@ uaa_ca_cert: |
   $fullchain
 " > "$local_control\bosh-vars.yml"
 
-}
+    }
 
-bosh deploy -n -d control-plane ..\templates\control-plane-deployment-kb-5.yml `
-    --vars-file=$local_control\bosh-vars.yml `
-    --ops-file=$local_control\vm-extensions-control.yml `
-    --vars-file=..\templates\versions.yml
-if ($use_minio.IsPresent) {
-    bosh deploy -n -d minio-$($RG) ..\templates\minio.yml `
+    bosh deploy -n -d control-plane ..\templates\control-plane-deployment-kb-5.yml `
         --vars-file=$local_control\bosh-vars.yml `
-        --ops-file=$local_control\vm-extensions-minio.yml `
+        --ops-file=$local_control\vm-extensions-control.yml `
         --vars-file=..\templates\versions.yml
+    if ($use_minio.IsPresent) {
+        bosh deploy -n -d minio-$($RG) ..\templates\minio.yml `
+            --vars-file=$local_control\bosh-vars.yml `
+            --ops-file=$local_control\vm-extensions-minio.yml `
+            --vars-file=..\templates\versions.yml
+    }
 }
 
 Write-Host "You can now login to https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME) with below admin credentials"
