@@ -224,6 +224,7 @@ instance_groups:
       worker_gateway:
         authorized_keys: |
           ((worker_key.public_key))
+          ((worker_remote_key.public_key))
         host_key: ((tsa_host_key))
         token_signing_key: ((token_signing_key))
       bind_port: 80
