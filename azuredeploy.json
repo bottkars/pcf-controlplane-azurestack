@@ -123,7 +123,7 @@
   },
   "variables": {
     "boshExtraStorageAccountName": "[concat('xtrastrg',uniquestring(resourceGroup().id, deployment().name))]",
-    "opsManVMName": "[parameters('opsManFQDNPrefix')]",
+    "opsManVMName": "ops_man_vm",
     "location": "[parameters('location')]",
     "virtualNetworkName": "[concat(resourceGroup().name,'-virtual-network')]",
     "plane_subnet_name": "[concat(resourceGroup().name,'-plane-subnet')]",
