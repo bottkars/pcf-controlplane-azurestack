@@ -1,0 +1,197 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "apiProfile": "2018-03-01-hybrid",
+  "parameters": {
+    "OpsManImageURI": {
+      "type": "string",
+      "defaultValue": "blob.local.azurestack.external",
+      "metadata": {
+        "description": "Uri of the Operations Manager VHD"
+      }
+    },
+
+    "opsManFQDNPrefix": {
+      "type": "string",
+      "defaultValue": "pcf-opsman",
+      "metadata": {
+        "description": "Domain prefix for opsman."
+      }
+    },
+    "opsManVHD": {
+      "type": "string",
+      "metadata": {
+        "description": "Opsman VHD Name"
+      }
+    },
+    "mask": {
+      "type": "string",
+      "defaultValue": "10.0",
+      "metadata": {
+        "description": "2 Octets od Subnet"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Size of vm"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "ubuntu",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "Password for admin user."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "local",
+      "metadata": {
+        "description": "location where you want to deploy resources"
+      }
+    }
+  },
+  "variables": {
+    "infrastructure_subnet_name": "[concat(resourceGroup().name,'-infrastructure-subnet')]",
+    "opsManVMName": "ops_man_vm",
+    "location": "[parameters('location')]",
+    "virtualNetworkName": "[concat(resourceGroup().name,'-virtual-network')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "opsManNicName": "OPSMANNIC",
+    "opsManPrivateIPAddress": "[concat(parameters('mask'),'.8.4')]",
+    "OpsManPublicIPName": "OpsManPublicIP",
+    "OpsManIPConfigName": "OpsManIPConfig",
+    "OpsManVersion": "[replace(parameters('opsManVHD'),'.vhd', '')]",
+    "ops_manager_security_group_name": "[concat(resourceGroup().name,'-ops-manager-security-group')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('OpsManVersion')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Linux",
+            "osState": "Generalized",
+            "blobUri": "[parameters('OpsManImageURI')]",
+            "storageAccountType": "Premium_LRS",
+            "caching": "ReadWrite",
+            "diskSizeGB": 127
+          }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('OpsManPublicIPName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "provisioner": "pcf_opsman_template"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('opsManNicName')]",
+      "location": "[variables('location')]",
+      "tags": {
+                "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('OpsManPublicIPName'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',  variables('ops_manager_security_group_name'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "[variables('OpsManIPConfigName')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('opsManPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceID('Microsoft.Network/publicIPAddresses/',variables('OpsManPublicIPName'))]"
+              },
+              "subnet": {
+                "id": "[resourceID('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('infrastructure_subnet_name'))]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('ops_manager_security_group_name'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('opsManVMName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "opsmanversion": "[variables('OpsManVersion')]",
+        "provisioner": "pcf_opsman_template"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/',variables('opsManNicName'))]",
+        "[concat('Microsoft.Compute/images/', variables('OpsManVersion'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('opsManFQDNPrefix')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[resourceId('Microsoft.Compute/images', variables('OpsManVersion'))]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('opsManNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false
+          }
+        }
+      }
+    }
+  ]
+}
