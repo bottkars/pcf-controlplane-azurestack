@@ -226,6 +226,7 @@ instance_groups:
           ((worker_key.public_key))
           ((remote_worker_key.public_key))
         host_key: ((tsa_host_key))
+        log_level: debug
       bind_port: 80
       credhub:
         client_id: concourse_to_credhub
