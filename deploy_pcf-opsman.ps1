@@ -146,6 +146,7 @@ param(
     [ValidateNotNullOrEmpty()]
     [switch]$force_product_download,
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
+    [Parameter(ParameterSetName = "update", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
     [switch]$nopupload,
 
