@@ -148,7 +148,7 @@ param(
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [Parameter(ParameterSetName = "update", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    [switch]$nopupload,
+    [switch]$noupload,
 
     [Parameter(ParameterSetName = "install", Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
@@ -429,25 +429,27 @@ if (!$OpsmanUpdate) {
     }  
 }
 $urlOfUploadedImageVhd = ('https://' + $ImageStorageAccount + '.blob.' + $blobbaseuri + '/' + $image_containername + '/' + $opsManVHD)
-Write-Host "Starting upload Procedure for $opsManVHD into storageaccount $ImageStorageAccount, this may take a while"
-if ($Environment -eq 'AzureStack') {
-    Write-Host "==>Checking OS Transfer Type" -nonewline 
-    $transfer_type = (get-runningos).Webrequestor
-    Write-Host -ForegroundColor Green "[using $transfer_type for transfer]"
-    $file = split-path -Leaf $opsmanager_uri
-    $localPath = "$Downloadpath/$file"
-    Write-Verbose $opsmanager_uri
-    if (!(Test-Path $localPath) -and !($DO_NOT_DOWNLOAD.IsPresent)) {
-        switch ($transfer_type) {
-            ".Net" {  
-                Start-BitsTransfer -Source $opsmanager_uri -Destination $localPath -DisplayName OpsManager
+### start noup
+if (!$noupload.ispresent) {
+
+    Write-Host "Starting upload Procedure for $opsManVHD into storageaccount $ImageStorageAccount, this may take a while"
+    if ($Environment -eq 'AzureStack') {
+        Write-Host "==>Checking OS Transfer Type" -nonewline 
+        $transfer_type = (get-runningos).Webrequestor
+        Write-Host -ForegroundColor Green "[using $transfer_type for transfer]"
+        $file = split-path -Leaf $opsmanager_uri
+        $localPath = "$Downloadpath/$file"
+        Write-Verbose $opsmanager_uri
+        if (!(Test-Path $localPath) -and !($DO_NOT_DOWNLOAD.IsPresent)) {
+            switch ($transfer_type) {
+                ".Net" {  
+                    Start-BitsTransfer -Source $opsmanager_uri -Destination $localPath -DisplayName OpsManager
+                }
+                Default {
+                    curl -o $localPath $opsmanager_uri
+                }
             }
-            Default {
-                curl -o $localPath $opsmanager_uri
-            }
-        }
-    }  
-    if (!$nopupload.ispresent) {
+        }  
         try {
             $new_arm_vhd = Add-AzureRmVhd -ResourceGroupName $image_rg -Destination $urlOfUploadedImageVhd `
                 -LocalFilePath $localPath -OverWrite:$false -ErrorAction Stop
@@ -465,38 +467,39 @@ if ($Environment -eq 'AzureStack') {
             $_
             break
         }
-    }
-}
-else {
-    # Blob Copy routine
-    $src_context = New-AzureStorageContext -StorageAccountName opsmanagerwesteurope -Anonymous
-    $dst_context = (Get-AzureRmStorageAccount -ResourceGroupName $image_rg -Name $ImageStorageAccount).context
-    ## check for blob
-    Write-Host "==>Checking blob $opsManVHD exixts in container $image_containername for Storageaccount $ImageStorageAccount" -NoNewline
-    $ExistingBlob = Get-AzureStorageBlob -Context $dst_context -Blob $opsManVHD -Container $image_containername -ErrorAction SilentlyContinue
-    if (!$ExistingBlob) {
-        Write-Host -ForegroundColor Green "[blob needs to be uploaded]"
-        # check container
-        Write-Host "==>Checking container $image_containername exists for Storageaccount $ImageStorageAccount" -NoNewline
-        $ContainerExists = (Get-AzureStorageContainer -Name $image_containername -Context $dst_context -ErrorAction SilentlyContinue)
-        If (!$ContainerExists) {
-            Write-Host -ForegroundColor Green "[creating container]"
-            $container = New-AzureStorageContainer -Name $image_containername -Permission Off -Context $dst_context            
-        }
-        else {
-            Write-Host -ForegroundColor blue "[container already exists]"
-        }
-        Write-Host "==>copying $opsManVHD into Storageaccount $ImageStorageAccount" -NoNewline
-        $copy = Get-AzureStorageBlob -Container images -Blob $opsManVHD -Context $src_context | `
-            Start-AzureStorageBlobCopy -DestContainer $image_containername -DestContext $dst_context
-        $complete = $copy | Get-AzureStorageBlobCopyState -WaitForComplete
-        Write-Host -ForegroundColor green "[done copying]"
+    
     }
     else {
-        Write-Host -ForegroundColor Blue "[blob already exixts]"
+        # Blob Copy routine
+        $src_context = New-AzureStorageContext -StorageAccountName opsmanagerwesteurope -Anonymous
+        $dst_context = (Get-AzureRmStorageAccount -ResourceGroupName $image_rg -Name $ImageStorageAccount).context
+        ## check for blob
+        Write-Host "==>Checking blob $opsManVHD exixts in container $image_containername for Storageaccount $ImageStorageAccount" -NoNewline
+        $ExistingBlob = Get-AzureStorageBlob -Context $dst_context -Blob $opsManVHD -Container $image_containername -ErrorAction SilentlyContinue
+        if (!$ExistingBlob) {
+            Write-Host -ForegroundColor Green "[blob needs to be uploaded]"
+            # check container
+            Write-Host "==>Checking container $image_containername exists for Storageaccount $ImageStorageAccount" -NoNewline
+            $ContainerExists = (Get-AzureStorageContainer -Name $image_containername -Context $dst_context -ErrorAction SilentlyContinue)
+            If (!$ContainerExists) {
+                Write-Host -ForegroundColor Green "[creating container]"
+                $container = New-AzureStorageContainer -Name $image_containername -Permission Off -Context $dst_context            
+            }
+            else {
+                Write-Host -ForegroundColor blue "[container already exists]"
+            }
+            Write-Host "==>copying $opsManVHD into Storageaccount $ImageStorageAccount" -NoNewline
+            $copy = Get-AzureStorageBlob -Container images -Blob $opsManVHD -Context $src_context | `
+                    Start-AzureStorageBlobCopy -DestContainer $image_containername -DestContext $dst_context
+            $complete = $copy | Get-AzureStorageBlobCopyState -WaitForComplete
+            Write-Host -ForegroundColor green "[done copying]"
+        }
+        else {
+            Write-Host -ForegroundColor Blue "[blob already exixts]"
+        }
     }
 }
-
+### end noup 
 <## next section will be templated soon
 Write-Host "==>Creating Custom Image $opsmanVersion in ResourceGroup $resourceGroup" -nonewline   
 
