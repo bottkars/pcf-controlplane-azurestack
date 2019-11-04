@@ -16,7 +16,9 @@ param(
     [switch]
     $use_minio,
     [switch]
-    $skip_upload_release
+    $skip_upload_release,
+    [switch]
+    $upload_releases_only
    
 )
 Push-Location $PSScriptRoot
@@ -177,8 +179,9 @@ if (!$redeploy.IsPresent) {
 
             bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-release')
 
-            bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
+            # bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
             bosh upload-release https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=4
+            if ($upload_releases_only.IsPresent){exit 0}
         }
     }
 
@@ -221,20 +224,20 @@ control-plane-security-group: $($RG)-plane-security-group
                 https://bosh.io/d/github.com/minio/minio-boshrelease
 
             "control-minio-lb: $($RG)-minio-lb
-        control-minio-security-group: $($RG)-minio-security-group
-        " > "$local_control/vm-lb-extensions-minio-vars.yml"
+control-minio-security-group: $($RG)-minio-security-group
+" > "$local_control/vm-lb-extensions-minio-vars.yml"
         
             "vm-extension-config:
-          name: control-minio-lb
-          cloud_properties:
-           security_group: ((control-minio-security-group))
-           load_balancer: ((control-minio-lb))
-        "  > "$local_control/vm-lb-extensions-minio.yml"
+name: control-minio-lb
+cloud_properties:
+security_group: ((control-minio-security-group))
+load_balancer: ((control-minio-lb))
+"  > "$local_control/vm-lb-extensions-minio.yml"
         
             "- type: replace
-        path: /instance_groups/name=minio/vm_extensions?
-        value: [control-minio-lb]
-        "   > "$local_control/vm-extensions-minio.yml"
+path: /instance_groups/name=minio/vm_extensions?
+value: [control-minio-lb]
+"   > "$local_control/vm-extensions-minio.yml"
 
 
             om --env "$HOME/om_$($RG).env" `
