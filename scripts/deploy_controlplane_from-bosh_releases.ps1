@@ -181,7 +181,11 @@ if (!$redeploy.IsPresent) {
 
             # bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
             bosh upload-release https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=4
-            if ($upload_releases_only.IsPresent){exit 0}
+            if ($upload_releases_only.IsPresent)
+                {
+                    pop-location
+                    exit 0
+                    }
         }
     }
 
@@ -282,4 +286,4 @@ Write-Host "You can now login to https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOM
 Write-Host "once logged in, use `"fly --target plane login --concourse-url https://plane.$($PCF_SUBDOMAIN_NAME).$($PCF_DOMAIN_NAME)`" to signin to flycli"
 (credhub.exe get /name:"/p-bosh/control-plane/uaa_users_admin" /j | ConvertFrom-Json).value
 
-Pop-Location
+PopLocation-
