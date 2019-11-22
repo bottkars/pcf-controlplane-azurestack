@@ -258,8 +258,8 @@ instance_groups:
           name: concourse
           password: ((postgres_password))
       tls_bind_port: 443
-      tls_cert: ((control-plane-tls.certificate))
-      tls_key: ((control-plane-tls.private_key))
+      tls_cert: ((web-plane-tls.certificate))
+      tls_key: ((web-plane-tls.private_key))
       token_signing_key: ((token_signing_key))    
   - <<: *telegraf_job
   - <<: *telegraf_agent_job
@@ -297,8 +297,8 @@ instance_groups:
         listen_port: 3000
         root_url: ((external_url)):3000
         ssl:
-          cert: ((control-plane-tls.certificate))
-          key: ((control-plane-tls.private_key))
+          cert: ((web-plane-tls.certificate))
+          key: ((web-plane-tls.private_key))
         auth:
           github:
             client_id: ((grafana.github_client_id))

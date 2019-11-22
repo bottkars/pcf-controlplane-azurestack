@@ -76,8 +76,8 @@ instance_groups:
       lets_encrypt:
         enabled: ((use_le))
       tls_bind_port: 443
-      tls_cert: ((web-plane-tls.certificate))
-      tls_key: ((web-plane-tls.private_key))
+      tls_cert: ((control-plane-tls.certificate))
+      tls_key: ((control-plane-tls.private_key))
       token_signing_key: ((token_signing_key))
     provides: {}
     release: concourse
@@ -138,8 +138,8 @@ instance_groups:
             type: internal
         port: 8844
         tls:
-          certificate: ((web-plane-tls.certificate))
-          private_key: ((web-plane-tls.private_key))
+          certificate: ((control-plane-tls.certificate))
+          private_key: ((control-plane-tls.private_key))
     provides: {}
     release: credhub
   - consumes:
@@ -154,8 +154,8 @@ instance_groups:
           passphrase: ((uaa_encryption_key))
       login:
         saml:
-          serviceProviderCertificate: ((web-plane-tls.certificate))
-          serviceProviderKey: ((web-plane-tls.private_key))
+          serviceProviderCertificate: ((control-plane-tls.certificate))
+          serviceProviderKey: ((control-plane-tls.private_key))
           serviceProviderKeyPassword: ""
       uaa:
         admin:
@@ -203,8 +203,8 @@ instance_groups:
             - bosh.admin
             name: admin
             password: ((uaa_users_admin))
-        sslCertificate: ((web-plane-tls.certificate))
-        sslPrivateKey: ((web-plane-tls.private_key))
+        sslCertificate: ((control-plane-tls.certificate))
+        sslPrivateKey: ((control-plane-tls.private_key))
         url: ((external_url)):8443
         zones:
           internal:
@@ -259,8 +259,8 @@ instance_groups:
           password: ((uaa_db_password))
         tls:
           ca: ((control-plane-ca.certificate))
-          certificate: ((web-plane-tls.certificate))
-          private_key: ((web-plane-tls.private_key))
+          certificate: ((control-plane-tls.certificate))
+          private_key: ((control-plane-tls.private_key))
     provides:
       postgres:
         as: db
