@@ -86,7 +86,8 @@ param(
         '2.7.3-build.208',
         '2.7.4-build.216',
         '2.7.5-build.218',
-        '2.7.6-build.223'
+        '2.7.6-build.223',
+        '2.7.7-build.229'
     )]
     $opsmanager_image = '2.7.3-build.208',
     # The name of the Ressource Group we want to Deploy to.
