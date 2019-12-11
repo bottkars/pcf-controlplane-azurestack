@@ -396,14 +396,14 @@ if (!$OpsmanUpdate) {
         -ServicePrincipalName $env_vars.client_id `
         -RoleDefinitionName Contributor -ErrorAction SilentlyContinue | Out-Null
     Write-Host -ForegroundColor green "[done]"
-    if ((get-runningos).OSType -eq 'win_x86_64' -or $Environment -ne 'AzureStack') {
-        $account_available = Get-AzureRmStorageAccountNameAvailability -Name $ImageStorageAccount -ErrorAction SilentlyContinue
-        $account_free = $account_available.NameAvailable
-    }
-    else {
-        Write-Warning "we have a netcore bug with azurestack and can not test stoprageaccount availabilty"
+   #if ((get-runningos).OSType -eq 'win_x86_64' -or $Environment -ne 'AzureStack') {
+   #     $account_available = Get-AzureRmStorageAccountNameAvailability -Name $ImageStorageAccount -ErrorAction SilentlyContinue
+   #     $account_free = $account_available.NameAvailable
+   # }
+   # else {
+   #     Write-Warning "we have a netcore bug with azurestack and can not test stoprageaccount availabilty"
         $account_free = $true
-    }
+   # }
     # bug not working in netcore against azurestack, as we can not set profiles :-( 
     # waiting for new az netcore module with updated api profiles
     # new 
