@@ -104,6 +104,18 @@ if (!$redeploy.IsPresent) {
     
                 invoke-webrequest -Uri "https://bosh.io/d/github.com/pivotasl-cf/credhub-release?v=$($releases.'credhub-release')" `
                     -OutFile "$downloaddir/credhub-release-$($releases.'credhub-release').tgz"
+                
+                invoke-webrequest -Uri "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=$($releases.'stemcell-release')" ``
+                    -OutFile "$downloaddir/bosh-azure-hyperv-ubuntu-xenial-go_agent-$($releases.'stemcell-release')"
+         
+                # bosh upload-release git+https://github.com/vito/telegraf-boshrelease
+                
+                # bosh upload-release git+https://github.com/vito/telegraf-agent-boshrelease
+    
+                # bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-release')
+    
+                # bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
+                # bosh upload-release https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=4    
     
                 #            invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')" `
                 #                -OutFile "$downloaddir/windows-utilities-release-$($releases.'windows-utilities-release').tgz"
