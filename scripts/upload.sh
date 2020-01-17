@@ -1,4 +1,7 @@
 #!/bin/bash
+bosh upload-release --sha1 66b8a0d51b0436bd615eb9b99fc5d3963dd87efa \
+  https://bosh.io/d/github.com/concourse/concourse-bosh-release?v=5.8.0
+
 bosh upload-release --sha1 1c678e1c7a3506c0e408860571560081c15e3c6d \
   https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.19.9
 

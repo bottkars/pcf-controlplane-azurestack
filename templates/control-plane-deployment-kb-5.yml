@@ -40,13 +40,13 @@ releases:
 - name: "uaa"
   version: ((uaa-release))
 - name: "influxdb"
-  version: ((influxdb-release))  
+  version: ((influxdb-boshrelease))  
 - name: bosh-dns-aliases
   version: ((bosh-dns-aliases-release))
 - name: bpm
   version: ((bpm-release))
 - name: grafana  
-  version: ((grafana-release))
+  version: ((grafana-boshrelease))
 - name: telegraf
   version: ((telegraf-release))
 - name: telegraf-agent

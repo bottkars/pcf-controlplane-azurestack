@@ -112,7 +112,7 @@ if (!$redeploy.IsPresent) {
                 
                 # bosh upload-release git+https://github.com/vito/telegraf-agent-boshrelease
     
-                # bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-release')
+                # bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-boshrelease')
     
                 # bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
                 # bosh upload-release https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=4    
@@ -189,7 +189,7 @@ if (!$redeploy.IsPresent) {
             
             bosh upload-release git+https://github.com/vito/telegraf-agent-boshrelease
 
-            bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-release')
+            bosh upload-release https://bosh.io/d/github.com/vito/grafana-boshrelease?v=$($releases.'grafana-boshrelease')
 
             # bosh upload-release git+https://github.com/cloudfoundry-community/influxdb-boshrelease
             bosh upload-release https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=4
