@@ -355,7 +355,7 @@ instance_groups:
     max_in_flight: 1
   vm_type: ((vm_type))
 - azs: ((azs))
-  instances: 1
+  instances: ((worker_count))
   jobs:
   - release: concourse
     name: worker
