@@ -355,7 +355,6 @@ instance_groups:
     max_in_flight: 1
   vm_type: ((vm_type))
 - azs: ((azs))
-  instances: 1
   jobs:
   - release: concourse
     name: worker
@@ -371,6 +370,7 @@ instance_groups:
   - <<: *telegraf_agent_job      
   lifecycle: service
   name: worker-linux
+  instances: ((worker_count))
   networks:
   - default:
     - dns
