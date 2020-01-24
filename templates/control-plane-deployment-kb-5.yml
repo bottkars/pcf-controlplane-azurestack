@@ -354,10 +354,11 @@ instance_groups:
   update:
     max_in_flight: 1
   vm_type: ((vm_type))
-- azs: ((azs))
+- name: worker-linux
+  instances: 2
+  azs: ((azs))
   jobs:
-  - release: concourse
-    name: worker
+  - name: worker
     properties:
       drain_timeout: 10m
       worker_gateway:
@@ -366,11 +367,10 @@ instance_groups:
         allow_host_access: true
         listen_address: 0.0.0.0:7777
         listen_network: tcp
+    release: concourse    
   - <<: *telegraf_job
   - <<: *telegraf_agent_job      
   lifecycle: service
-  name: worker-linux
-  instances: ((worker_count))
   networks:
   - default:
     - dns
@@ -380,6 +380,7 @@ instance_groups:
   update:
     max_in_flight: 1
   vm_type: ((worker_vm_type))
+
   
 - azs: ((azs))
   instances: 1
