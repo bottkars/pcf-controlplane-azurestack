@@ -3,6 +3,7 @@
 # VERSIONS wil be read from a versions.yaml in exportet TEMPLATES directory
 # use with direnv exports for best
 # functions
+set -ueo pipefail
 function upload-release() {
   while [[ "$#" -gt 0 ]]
   do

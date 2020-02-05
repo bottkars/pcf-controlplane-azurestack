@@ -50,11 +50,16 @@ releases:
 - name: telegraf
   version: ((telegraf-release))
 - name: telegraf-agent
-  version: ((telegraf-agent-release))      
+  version: ((telegraf-agent-release))    
+- name: windows-utilities
+  version: ((windows-utilities-release))    
 stemcells:
 - alias: default
   os: ubuntu-xenial
   version: ((stemcell-release))
+- alias: windows
+  os: windows2019
+  version: ((windows_stemcell_version))  
 addons:
 - jobs:
   - name: bosh-dns-aliases
@@ -382,9 +387,9 @@ instance_groups:
   vm_type: ((worker_vm_type))
 
   
-- azs: ((azs))
+- name: influxdb
+  azs: ((azs))
   instances: 1
-  name: influxdb
   jobs:
   - release: influxdb
     name: influxdb
@@ -419,6 +424,39 @@ instance_groups:
     - gateway
     name: ((network_name))
 
+- name: windows-worker
+  azs: ((azs))
+  instances: ((windows_instances))
+  jobs:
+  - name: set_password
+    release: windows-utilities
+    properties:
+      set_password:
+        username: "administrator" # defaults to "Administrator"
+        password: "Password123!" # must meet default Windows complexity requirements
+  - name: enable_ssh
+    release: windows-utilities
+  - name: enable_rdp
+    release: windows-utilities  
+  - consumes: {}
+    name: worker-windows
+#      baggagclaim-windows: {from: windows-baggageclaim}
+#      garden: {from: windows-garden}  
+    properties:
+      drain_timeout: 10m
+      worker_gateway:
+        worker_key: ((worker_key))
+    release: concourse
+  lifecycle: service
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: ((network_name))
+  stemcell: windows
+  update:
+    max_in_flight: 1
+  vm_type: ((vm_type))
 
 update:
   canaries: 1
