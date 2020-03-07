@@ -1,13 +1,21 @@
 #!/bin/bash
-opsManVHD="ops-manager-2.8.2-build.203.vhd"
-az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
- --account-name ${IMAGE_ACCOUNT} \
- --source-uri https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}
+
+IMAGE_CONTAINER=images
+IMAGE_ACCOUNT=opsmanagerimage
+OPS_MAN_NIC=OPSMANNIC
+opsManVHD="ops-manager-2.8.3-build.217.vhd"
+
 #
 ######
+if [[ ! $( az storage blob show --account-name ${IMAGE_ACCOUNT} --name ${opsManVHD} \
+ --container-name ${IMAGE_CONTAINER}) ]]
+then
+  echo "Blob ${opsManVHD} not found, need to copy"
+  az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
+    --account-name ${IMAGE_ACCOUNT} \
+    --source-uri https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}
+fi  
 
- az storage blob show --account-name ${IMAGE_ACCOUNT} --name ${opsManVHD} \                                  bottk@SurfaceBook3
- --container-name ${IMAGE_CONTAINER}
 
 echo "Querying Blob Copy Status"
 while [ $(az storage blob show \
@@ -29,7 +37,7 @@ echo ${OPS_MAN_RELEASE}
 
 om export-installation --output-file opsman.exp
 
-az vm delete --name ${AZS_RESOURCE_GROUP}-ops-manager-vm \
+az vm delete --name ops_man_vm \
   --resource-group ${AZS_RESOURCE_GROUP} -y
 
 az image create --resource-group ${AZS_RESOURCE_GROUP} \
@@ -41,14 +49,14 @@ az image create --resource-group ${AZS_RESOURCE_GROUP} \
 
 az vm create --name ops-man-vm --resource-group ${AZS_RESOURCE_GROUP} \
  --location ${AZS_LOCATION} \
- --nics ${AZS_RESOURCE_GROUP}-ops-manager-nic \
+ --nics ${OPS_MAN_NIC} \
  --image ${OPS_MAN_RELEASE} \
  --os-disk-name ${OPS_MAN_RELEASE}-osdisk \
  --admin-username ubuntu \
  --os-disk-size-gb 127 \
  --size Standard_DS2_v2 \
- --storage-sku StandardSSD_LRS \
- --ssh-key-value "$(ssh-keygen -y -f plane/env/opsman.key)"
+ --storage-sku Standard_LRS \
+ --ssh-key-value "$(ssh-keygen -y -f ${DEPLOYMENT}/env/opsman.key)"
 
 om import-installation --installation opsman.exp
 
