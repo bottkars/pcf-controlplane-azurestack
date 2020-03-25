@@ -3,7 +3,7 @@
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.8.3-build.217.vhd"
+opsManVHD="ops-manager-2.9.0-build.106.vhd"
 
 #
 ######
@@ -18,15 +18,17 @@ fi
 
 
 echo "Querying Blob Copy Status"
-while [ $(az storage blob show \
- --name ${opsManVHD}\
- --container-name ${IMAGE_CONTAINER} \
- --account-name ${IMAGE_ACCOUNT} \
- --query '[properties.copy.status]' --output tsv) != "success" ]
-do
-printf '.'
-sleep 5
-done
+
+until az storage blob show \
+	--name ${opsManVHD}\
+	--container-name ${IMAGE_CONTAINER} \
+	--account-name ${IMAGE_ACCOUNT} \
+	--output json --query "[properties.copy.status=='success']" \
+	2>/dev/null 
+	do
+		printf '.'
+		sleep 5
+	done
 
 #####
 OPS_MAN_VHD=$(az storage blob list --container-name ${IMAGE_CONTAINER} --account-name ${IMAGE_ACCOUNT} --query "[?contains(name, 'ops-manager')].name"  --output tsv | sort -r --version-sort | head -1)
