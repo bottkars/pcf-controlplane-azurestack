@@ -113,6 +113,17 @@
         "description": "location where you want to deploy resources"
       }
     },
+    "useAzureStackDNSzones": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Create Azurestack DNS Zone  or use external / exiting hostes"
+      }
+    },    
     "dnsZoneName": {
       "type": "string",
       "defaultValue": "control.local.azurestack.external",
@@ -261,66 +272,7 @@
       "kind": "Storage",
       "properties": {}
     },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "condition": "[equals(parameters('usemanageddisks'),'no')]",
-      "name": "[concat(variables('boshExtraStorageAccountName'), '2')]",
-      "apiVersion": "2017-10-01",
-      "location": "[variables('location')]",
-      "tags": {
-        "provisioner": "pcf_opsman_template"
-      },
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "condition": "[equals(parameters('usemanageddisks'),'no')]",
-      "name": "[concat(variables('boshExtraStorageAccountName'), '3')]",
-      "apiVersion": "2017-10-01",
-      "location": "[variables('location')]",
-      "tags": {
-        "provisioner": "pcf_opsman_template"
-      },
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "condition": "[equals(parameters('usemanageddisks'),'no')]",
-      "name": "[concat(variables('boshExtraStorageAccountName'), '4')]",
-      "apiVersion": "2017-10-01",
-      "location": "[variables('location')]",
-      "tags": {
-        "provisioner": "pcf_opsman_template"
-      },
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "condition": "[equals(parameters('usemanageddisks'),'no')]",
-      "name": "[concat(variables('boshExtraStorageAccountName'), '5')]",
-      "apiVersion": "2017-10-01",
-      "location": "[variables('location')]",
-      "tags": {
-        "provisioner": "pcf_opsman_template"
-      },
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
+
     {
       "name": "[variables('diagnosticsStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
@@ -350,6 +302,7 @@
     {
       "type": "Microsoft.Network/dnszones",
       "condition": "[equals(parameters('Environment'),'AzureStack')]",
+      "condition": "[equals(parameters('useAzureStackDNSzones'),'yes')]",
       "name": "[parameters('dnsZoneName')]",
       "tags": {
         "provisioner": "pcf_opsman_template"
@@ -361,6 +314,7 @@
     {
       "type": "Microsoft.Network/dnszones/A",
       "name": "[concat(parameters('dnsZoneName'),'/', parameters('opsManFQDNPrefix'))]",
+      "condition": "[equals(parameters('useAzureStackDNSzones'),'yes')]",
       "apiVersion": "2016-04-01",
       "properties": {
         "TTL": 60,
@@ -378,6 +332,7 @@
     },
     {
       "type": "Microsoft.Network/dnszones/A",
+      "condition": "[equals(parameters('useAzureStackDNSzones'),'yes')]",
       "name": "[concat(parameters('dnsZoneName'),'/minio')]",
       "apiVersion": "2016-04-01",
       "properties": {
@@ -397,6 +352,7 @@
     {
       "type": "Microsoft.Network/dnszones/A",
       "name": "[concat(parameters('dnsZoneName'),'/plane')]",
+      "condition": "[equals(parameters('useAzureStackDNSzones'),'yes')]",
       "apiVersion": "2016-04-01",
       "properties": {
         "TTL": 60,
