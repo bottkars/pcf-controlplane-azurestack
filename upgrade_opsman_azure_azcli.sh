@@ -3,7 +3,7 @@
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.9.0-build.106.vhd"
+opsManVHD="ops-manager-2.9.2-build.129.vhd"
 
 #
 ######
@@ -11,9 +11,9 @@ if [[ ! $( az storage blob show --account-name ${IMAGE_ACCOUNT} --name ${opsManV
  --container-name ${IMAGE_CONTAINER}) ]]
 then
   echo "Blob ${opsManVHD} not found, need to copy"
-  az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
-    --account-name ${IMAGE_ACCOUNT} \
-    --source-uri https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}
+ #az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
+ #   --account-name ${IMAGE_ACCOUNT} \
+ #   --source-uri https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}
 fi  
 
 
