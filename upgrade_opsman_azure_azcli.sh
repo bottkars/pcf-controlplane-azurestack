@@ -3,7 +3,7 @@
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.9.2-build.129.vhd"
+opsManVHD="ops-manager-2.10.0-build.48.vhd"
 
 #
 ######
@@ -39,7 +39,7 @@ echo ${OPS_MAN_RELEASE}
 
 om export-installation --output-file opsman.exp
 
-az vm delete --name ops_man_vm \
+az vm delete --name ops-man-vm \
   --resource-group ${AZS_RESOURCE_GROUP} -y
 
 az image create --resource-group ${AZS_RESOURCE_GROUP} \
@@ -48,6 +48,7 @@ az image create --resource-group ${AZS_RESOURCE_GROUP} \
 --location ${AZS_LOCATION} \
 --os-type Linux
 
+chmod 600 ${DEPLOYMENT}/env/opsman.key
 
 az vm create --name ops-man-vm --resource-group ${AZS_RESOURCE_GROUP} \
  --location ${AZS_LOCATION} \
@@ -61,9 +62,5 @@ az vm create --name ops-man-vm --resource-group ${AZS_RESOURCE_GROUP} \
  --ssh-key-value "$(ssh-keygen -y -f ${DEPLOYMENT}/env/opsman.key)"
 
 om import-installation --installation opsman.exp
-
-om update-ssl-certificate \
-    --certificate-pem "$(cat ${HOME_DIR}/fullchain.cer)" \
-    --private-key-pem "$(cat ${HOME_DIR}/${CONTROLPLANE_SUBDOMAIN_NAME}.${CONTROLPLANE_DOMAIN_NAME}.key)"
 
 om apply-changes --skip-deploy-products
