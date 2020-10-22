@@ -25,9 +25,6 @@ function upload-release() {
 }
 #
 VERSIONS=${TEMPLATES}/versions.yml
-# stemcells
-RELEASE=$(grep -A0 stemcell-release $VERSIONS | cut -d ':' -f2 | tr -d ' "')
-bosh upload-stemcell "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=${RELEASE}"
 # cf releases
 unset REPO RELEASE VERSIONS
 set -u

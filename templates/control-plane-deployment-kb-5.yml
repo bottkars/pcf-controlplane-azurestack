@@ -31,32 +31,40 @@ name: control-plane
 releases:
 - name: "concourse"
   version: ((concourse-bosh-release))
+  url: https://bosh.io/d/github.com/concourse/concourse-bosh-release?v=((concourse-bosh-release))
 - name: "garden-runc"
   version: ((garden-runc-release))
 - name: "postgres"
   version: ((postgres-release))
+  url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=((postgres-release))
 - name: "credhub"
   version: ((credhub-release))
+  url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=((credhub-release))
 - name: "uaa"
   version: ((uaa-release))
+  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=((uaa-release))
 - name: "influxdb"
-  version: ((influxdb-boshrelease))  
+  version: ((influxdb-boshrelease)) 
+  url: https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=((influxdb-boshrelease)) 
 - name: bosh-dns-aliases
   version: ((bosh-dns-aliases-release))
 - name: bpm
   version: ((bpm-release))
+  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=((bpm-release))
 - name: grafana  
   version: ((grafana-boshrelease))
+  url: https://bosh.io/d/github.com/vito/grafana-boshrelease?v=((grafana-boshrelease))
 - name: telegraf
   version: ((telegraf-release))
+  url: git+https://github.com/vito/telegraf-boshrelease
 - name: telegraf-agent
   version: ((telegraf-agent-release))    
-
+  url: git+https://github.com/vito/telegraf-agent-boshrelease
 stemcells:
 - alias: default
   os: ubuntu-xenial
   version: ((stemcell-release))
-
+  url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=((stemcell-release))
 addons:
 - jobs:
   - name: bosh-dns-aliases
@@ -93,7 +101,7 @@ instance_groups:
         authentication:
           uaa:
             ca_certs:
-            - ((control-plane-ca.certificate))
+            - ((control-plane-tls.certificate))
             url: ((external_url)):8443
         authorization:
           permissions:
@@ -230,18 +238,20 @@ instance_groups:
         host_key: ((tsa_host_key))
         log_level: debug
       bind_port: 80
+      cluster_name: ((cluster_name))
       credhub:
         client_id: concourse_to_credhub
         client_secret: ((concourse_to_credhub_secret))
         tls:
           ca_cert:
-            certificate: ((control-plane-ca.certificate))
+            certificate: ((control-plane-tls.certificate))
         url: ((external_url)):8844
+      enable_across_step: true  
       external_url: ((external_url))
       generic_oauth:
         auth_url: ((external_url)):8443/oauth/authorize
         ca_cert:
-          certificate: ((control-plane-ca.certificate))
+          certificate: ((control-plane-tls.certificate))
         client_id: concourse
         client_secret: ((concourse_client_secret))
         display_name: UAA
@@ -468,13 +478,13 @@ variables:
     common_name: controlplaneca
     is_ca: true
   type: certificate
-- name: control-plane-tls
-  options:
-    alternative_names:
-    - ((wildcard_domain))
-    ca: control-plane-ca
-    common_name: control-plane-tls
-  type: certificate
+#- name: control-plane-tls
+#  options:
+#    alternative_names:
+#    - ((wildcard_domain))
+#    ca: control-plane-ca
+#    common_name: control-plane-tls
+#  type: certificate
 - name: db-tls
   options:
     ca: control-plane-ca

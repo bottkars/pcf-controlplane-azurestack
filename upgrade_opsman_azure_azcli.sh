@@ -3,7 +3,7 @@
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.10.0-build.48.vhd"
+opsManVHD="ops-manager-2.10.2-build.90.vhd"
 
 #
 ######
@@ -11,9 +11,9 @@ if [[ ! $( az storage blob show --account-name ${IMAGE_ACCOUNT} --name ${opsManV
  --container-name ${IMAGE_CONTAINER}) ]]
 then
   echo "Blob ${opsManVHD} not found, need to copy"
- #az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
- #   --account-name ${IMAGE_ACCOUNT} \
- #   --source-uri https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}
+ az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
+    --account-name ${IMAGE_ACCOUNT} \
+    --source-uri "https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}"
 fi  
 
 
@@ -34,27 +34,27 @@ until az storage blob show \
 OPS_MAN_VHD=$(az storage blob list --container-name ${IMAGE_CONTAINER} --account-name ${IMAGE_ACCOUNT} --query "[?contains(name, 'ops-manager')].name"  --output tsv | sort -r --version-sort | head -1)
 OPS_MAN_RELEASE=$(echo $OPS_MAN_VHD | egrep -o '[0-9]+.*-build.[0-9]+')
 OPS_MAN_RELEASE=${OPS_MAN_RELEASE%'.vhd'}
-echo ${OPS_MAN_RELEASE}
+echo "${OPS_MAN_RELEASE}"
 
 
 om export-installation --output-file opsman.exp
 
 az vm delete --name ops-man-vm \
-  --resource-group ${AZS_RESOURCE_GROUP} -y
+  --resource-group "${AZS_RESOURCE_GROUP}" -y
 
-az image create --resource-group ${AZS_RESOURCE_GROUP} \
---name ${OPS_MAN_RELEASE} \
+az image create --resource-group "${AZS_RESOURCE_GROUP}" \
+--name "${OPS_MAN_RELEASE}" \
 --source "${IMAGE_LOCATION}/${opsManVHD}" \
---location ${AZS_LOCATION} \
+--location "${AZS_LOCATION}" \
 --os-type Linux
 
-chmod 600 ${DEPLOYMENT}/env/opsman.key
+chmod 600 "${DEPLOYMENT}/env/opsman.key"
 
-az vm create --name ops-man-vm --resource-group ${AZS_RESOURCE_GROUP} \
- --location ${AZS_LOCATION} \
- --nics ${OPS_MAN_NIC} \
- --image ${OPS_MAN_RELEASE} \
- --os-disk-name ${OPS_MAN_RELEASE}-osdisk \
+az vm create --name ops-man-vm --resource-group "${AZS_RESOURCE_GROUP}" \
+ --location "${AZS_LOCATION}" \
+ --nics "${OPS_MAN_NIC}" \
+ --image "${OPS_MAN_RELEASE} "\
+ --os-disk-name "${OPS_MAN_RELEASE}-osdisk" \
  --admin-username ubuntu \
  --os-disk-size-gb 127 \
  --size Standard_DS2_v2 \
