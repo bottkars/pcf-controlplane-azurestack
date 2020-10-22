@@ -1,0 +1,47 @@
+#!/bin/bash
+
+IMAGE_RG="images"
+IMAGE_CONTAINER=images
+IMAGE_ACCOUNT=opsmanagerimage
+OPS_MAN_NIC=OPSMANNIC
+opsManVHD="ops-manager-2.10.0-build.48.vhd"
+OPSMAN_IMAGE="https://${IMAGE_ACCOUNT}.blob.local.azurestack.external/${IMAGE_CONTAINER}/${opsManVHD}"
+
+
+
+az group create  --resource-group "${IMAGE_RG}" --location local 
+az storage account create --name $IMAGE_ACCOUNT --resource-group "${IMAGE_RG}" --location local --sku Standard_LRS
+az storage container create --name $IMAGE_CONTAINER \
+    --account-name $IMAGE_ACCOUNT \
+    --public-access blob --resource-group ${IMAGE_RG}
+
+
+az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
+    --account-name ${IMAGE_ACCOUNT} \
+    --source-uri "https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}"
+
+
+
+until az storage blob show \
+	--name ${opsManVHD}\
+	--container-name ${IMAGE_CONTAINER} \
+	--account-name ${IMAGE_ACCOUNT} \
+	--output json --query "[properties.copy.status=='success']" \
+	2>/dev/null 
+    do
+    printf '.'
+    sleep 5
+done
+az group create  --resource-group "${AZS_RESOURCE_GROUP}" --location local 
+
+az group deployment create --resource-group ${AZS_RESOURCE_GROUP} \
+    --template-uri "https://raw.githubusercontent.com/bottkars/pcf-controlplane-azurestack/testing/azuredeploy.json" \
+    --parameters \
+    sshKeyData="$(ssh-keygen -y -f plane/env/opsman.key)" \
+    opsManVHD=${opsManVHD} \
+    mask=${MASK} \
+    location=${AZS_LOCATION} \
+    OpsManImageURI=${OPSMAN_IMAGE}
+
+
+https://github.com/bottkars/pcf-controlplane-azurestack/blob/testing/azuredeploy.json
