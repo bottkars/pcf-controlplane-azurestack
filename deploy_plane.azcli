@@ -4,7 +4,7 @@ IMAGE_RG="images"
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.10.0-build.48.vhd"
+opsManVHD="ops-manager-2.10.2-build.90.vhd"
 OPSMAN_IMAGE="https://${IMAGE_ACCOUNT}.blob.local.azurestack.external/${IMAGE_CONTAINER}/${opsManVHD}"
 
 
@@ -34,7 +34,7 @@ until az storage blob show \
 done
 az group create  --resource-group "${AZS_RESOURCE_GROUP}" --location local 
 
-az group deployment create --resource-group ${AZS_RESOURCE_GROUP} \
+az deployment group create --resource-group ${AZS_RESOURCE_GROUP} \
     --template-uri "https://raw.githubusercontent.com/bottkars/pcf-controlplane-azurestack/testing/azuredeploy.json" \
     --parameters \
     sshKeyData="$(ssh-keygen -y -f plane/env/opsman.key)" \
@@ -43,5 +43,3 @@ az group deployment create --resource-group ${AZS_RESOURCE_GROUP} \
     location=${AZS_LOCATION} \
     OpsManImageURI=${OPSMAN_IMAGE}
 
-
-https://github.com/bottkars/pcf-controlplane-azurestack/blob/testing/azuredeploy.json

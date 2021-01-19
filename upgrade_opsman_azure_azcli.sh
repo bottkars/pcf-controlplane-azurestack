@@ -3,7 +3,7 @@
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.10.2-build.90.vhd"
+opsManVHD="ops-manager-2.10.3-build.127.vhd"
 
 #
 ######
