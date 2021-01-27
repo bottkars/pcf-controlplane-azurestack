@@ -2,25 +2,26 @@
 
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
-OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.10.3-build.127.vhd"
+OPSMAN_NIC=OPSMANNIC
+OPSMAN_VMNAME=ops_man_vm
+OPSMAN_VHD="ops-manager-2.10.5-build.147.vhd"
 
 #
 ######
-if [[ ! $( az storage blob show --account-name ${IMAGE_ACCOUNT} --name ${opsManVHD} \
+if [[ ! $( az storage blob show --account-name ${IMAGE_ACCOUNT} --name ${OPSMAN_VHD} \
  --container-name ${IMAGE_CONTAINER}) ]]
 then
-  echo "Blob ${opsManVHD} not found, need to copy"
- az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
+  echo "Blob ${OPSMAN_VHD} not found, need to copy"
+ az storage blob copy start --destination-blob ${OPSMAN_VHD} --destination-container ${IMAGE_CONTAINER} \
     --account-name ${IMAGE_ACCOUNT} \
-    --source-uri "https://opsmanagerwesteurope.blob.core.windows.net/images/${opsManVHD}"
+    --source-uri "https://opsmanagerwesteurope.blob.core.windows.net/images/${OPSMAN_VHD}"
 fi  
 
 
 echo "Querying Blob Copy Status"
 
 until az storage blob show \
-	--name ${opsManVHD}\
+	--name ${OPSMAN_VHD}\
 	--container-name ${IMAGE_CONTAINER} \
 	--account-name ${IMAGE_ACCOUNT} \
 	--output json --query "[properties.copy.status=='success']" \
@@ -31,30 +32,30 @@ until az storage blob show \
 	done
 
 #####
-OPS_MAN_VHD=$(az storage blob list --container-name ${IMAGE_CONTAINER} --account-name ${IMAGE_ACCOUNT} --query "[?contains(name, 'ops-manager')].name"  --output tsv | sort -r --version-sort | head -1)
-OPS_MAN_RELEASE=$(echo $OPS_MAN_VHD | egrep -o '[0-9]+.*-build.[0-9]+')
-OPS_MAN_RELEASE=${OPS_MAN_RELEASE%'.vhd'}
-echo "${OPS_MAN_RELEASE}"
+OPSMAN_VHD=$(az storage blob list --container-name ${IMAGE_CONTAINER} --account-name ${IMAGE_ACCOUNT} --query "[?contains(name, 'ops-manager')].name"  --output tsv | sort -r --version-sort | head -1)
+OPSMAN_RELEASE=$(echo $OPSMAN_VHD | egrep -o '[0-9]+.*-build.[0-9]+')
+OPSMAN_RELEASE=${OPSMAN_RELEASE%'.vhd'}
+echo "${OPSMAN_RELEASE}"
 
 
 om export-installation --output-file opsman.exp
 
-az vm delete --name ops-man-vm \
+az vm delete --name ${OPSMAN_VMNAME} \
   --resource-group "${AZS_RESOURCE_GROUP}" -y
 
 az image create --resource-group "${AZS_RESOURCE_GROUP}" \
---name "${OPS_MAN_RELEASE}" \
---source "${IMAGE_LOCATION}/${opsManVHD}" \
+--name "${OPSMAN_RELEASE}" \
+--source "${IMAGE_LOCATION}/${OPSMAN_VHD}" \
 --location "${AZS_LOCATION}" \
 --os-type Linux
 
 chmod 600 "${DEPLOYMENT}/env/opsman.key"
 
-az vm create --name ops-man-vm --resource-group "${AZS_RESOURCE_GROUP}" \
+az vm create --name ${OPSMAN_VMNAME} --resource-group "${AZS_RESOURCE_GROUP}" \
  --location "${AZS_LOCATION}" \
- --nics "${OPS_MAN_NIC}" \
- --image "${OPS_MAN_RELEASE} "\
- --os-disk-name "${OPS_MAN_RELEASE}-osdisk" \
+ --nics "${OPSMAN_NIC}" \
+ --image "${OPSMAN_RELEASE} "\
+ --os-disk-name "${OPSMAN_RELEASE}-osdisk" \
  --admin-username ubuntu \
  --os-disk-size-gb 127 \
  --size Standard_DS2_v2 \
