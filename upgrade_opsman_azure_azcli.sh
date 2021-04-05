@@ -4,7 +4,7 @@ IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPSMAN_NIC=OPSMANNIC
 OPSMAN_VMNAME=ops_man_vm
-OPSMAN_VHD="ops-manager-2.10.5-build.147.vhd"
+OPSMAN_VHD="ops-manager-2.10.7-build.163.vhd"
 
 #
 ######
