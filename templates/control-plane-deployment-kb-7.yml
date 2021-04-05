@@ -1,30 +1,30 @@
 ---
 ## Anchors
 
-telegraf:
-  <<: &influxdb_properties
-    influxdb:
-      database: concourse
-      url: http://influxdb.service.cf.internal:8086
-      username: ((influxdb.writer_username))
-      password: ((influxdb.writer_password))
-  jobs:
+#telegraf:
+#  <<: &influxdb_properties
+#    influxdb:
+#      database: concourse
+#      url: http://influxdb.service.cf.internal:8086
+#      username: ((influxdb.writer_username))
+#      password: ((influxdb.writer_password))
+#  jobs:
   # captures host metrics
-  - <<: &telegraf_job
-      name: telegraf
-      release: telegraf
-      properties:
-        <<: *influxdb_properties
+#  - <<: &telegraf_job
+#      name: telegraf
+#      release: telegraf
+#      properties:
+#        <<: *influxdb_properties
   # captures per-process metrics
   # https://github.com/influxdata/telegraf/blob/4d3519756c278c90d1207518bcc97a10c28555f3/plugins/inputs/procstat/README.md
-  - <<: &telegraf_agent_job
-      name: telegraf-agent
-      release: telegraf-agent
-      properties:
-        <<: *influxdb_properties
-        inputs:
-          procstat:
-            pattern: 'bin/concourse|bin/baggageclaim|garden-properties|bin/runc|resource/check|gzip|erlc|beam.smp|ct_run|dockerd|telegraf|postgres'
+#  - <<: &telegraf_agent_job
+#      name: telegraf-agent
+#      release: telegraf-agent
+#      properties:
+#        <<: *influxdb_properties
+#        inputs:
+#          procstat:
+#            pattern: 'bin/concourse|bin/baggageclaim|garden-properties|bin/runc|resource/check|gzip|erlc|beam.smp|ct_run|dockerd|telegraf|postgres'
 
 
 name: control-plane
@@ -43,23 +43,23 @@ releases:
 - name: "uaa"
   version: ((uaa-release))
   url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=((uaa-release))
-- name: "influxdb"
-  version: ((influxdb-boshrelease)) 
-  url: https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=((influxdb-boshrelease)) 
+#- name: "influxdb"
+#  version: ((influxdb-boshrelease)) 
+#  url: https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=((influxdb-boshrelease)) 
 - name: bosh-dns-aliases
   version: ((bosh-dns-aliases-release))
 - name: bpm
   version: ((bpm-release))
   url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=((bpm-release))
-- name: grafana  
-  version: ((grafana-boshrelease))
-  url: https://bosh.io/d/github.com/vito/grafana-boshrelease?v=((grafana-boshrelease))
-- name: telegraf
-  version: ((telegraf-release))
-  url: git+https://github.com/vito/telegraf-boshrelease
-- name: telegraf-agent
-  version: ((telegraf-agent-release))    
-  url: git+https://github.com/vito/telegraf-agent-boshrelease
+#- name: grafana  
+#  version: ((grafana-boshrelease))
+#  url: https://bosh.io/d/github.com/vito/grafana-boshrelease?v=((grafana-boshrelease))
+#- name: telegraf
+#  version: ((telegraf-release))
+#  url: git+https://github.com/vito/telegraf-boshrelease
+#- name: telegraf-agent
+#  version: ((telegraf-agent-release))    
+#  url: git+https://github.com/vito/telegraf-agent-boshrelease
 stemcells:
 - alias: default
   os: ubuntu-xenial
@@ -77,13 +77,13 @@ addons:
           instance_group: db
           network: ((network_name))
           query: '*'
-      - domain: influxdb.service.cf.internal
-        targets:
-        - deployment: control-plane
-          domain: bosh
-          instance_group: influxdb
-          network: ((network_name))
-          query: '*'          
+#      - domain: influxdb.service.cf.internal
+#        targets:
+#        - deployment: control-plane
+#          domain: bosh
+#          instance_group: influxdb
+#          network: ((network_name))
+#          query: '*'          
     release: bosh-dns-aliases
   name: bosh-dns-aliases  
 instance_groups:
@@ -273,49 +273,49 @@ instance_groups:
       tls_cert: ((web-plane-tls.certificate))
       tls_key: ((web-plane-tls.private_key))
       token_signing_key: ((token_signing_key))    
-  - <<: *telegraf_job
-  - <<: *telegraf_agent_job
-  - consumes: {}
-    name: grafana
-    release: grafana
-    properties:
-      grafana:
-        admin_password: ((grafana.password))
-        admin_username: admin
-        dashboards:
-        - name: Concourse
-          content: ((grafana_dashboard))
-        - name: Concourse Builds
-          content: ((grafana_dashboard_builds))  
-        - name: Concourse Golang
-          content: ((grafana_dashboard_golang))  
-        - name: Concourse Response Tiomes
-          content: ((grafana_dashboard_response_times))  
-        - name: Concourse Overview
-          content: ((grafana_dashboard_overview))  
-        datasources:
-        - name: concourse
-          database_name: ((influxdb.dbname))
-          url: http://influxdb.service.cf.internal:8086
-          database_type: influxdb
-          user: ((influxdb.reader_username))
-          password: ((influxdb.reader_password))
-        - name: telegraf
-          database_name: ((influxdb.dbname))
-          url: http://influxdb.service.cf.internal:8086
-          database_type: influxdb
-          user: ((influxdb.reader_username))
-          password: ((influxdb.reader_password))
-        listen_port: 3000
-        root_url: ((external_url)):3000
-        ssl:
-          cert: ((web-plane-tls.certificate))
-          key: ((web-plane-tls.private_key))
-        auth:
-          github:
-            client_id: ((grafana.github_client_id))
-            client_secret: ((grafana.github_client_secret)) 
-            enabled: ((grafana.github_enabled)) 
+#  - <<: *telegraf_job
+#  - <<: *telegraf_agent_job
+#  - consumes: {}
+#    name: grafana
+#    release: grafana
+#    properties:
+#      grafana:
+#        admin_password: ((grafana.password))
+#        admin_username: admin
+#        dashboards:
+#        - name: Concourse
+#          content: ((grafana_dashboard))
+#        - name: Concourse Builds
+#          content: ((grafana_dashboard_builds))  
+#        - name: Concourse Golang
+#          content: ((grafana_dashboard_golang))  
+#        - name: Concourse Response Tiomes
+ #         content: ((grafana_dashboard_response_times))  
+#        - name: Concourse Overview
+#          content: ((grafana_dashboard_overview))  
+#        datasources:
+#        - name: concourse
+#          database_name: ((influxdb.dbname))
+#          url: http://influxdb.service.cf.internal:8086
+#          database_type: influxdb
+#          user: ((influxdb.reader_username))
+#          password: ((influxdb.reader_password))
+#        - name: telegraf
+#          database_name: ((influxdb.dbname))
+#          url: http://influxdb.service.cf.internal:8086
+#          database_type: influxdb
+#          user: ((influxdb.reader_username))
+#          password: ((influxdb.reader_password))
+#        listen_port: 3000
+#        root_url: ((external_url)):3000
+#        ssl:
+#          cert: ((web-plane-tls.certificate))
+#          key: ((web-plane-tls.private_key))
+#        auth:
+#          github:
+#            client_id: ((grafana.github_client_id))
+#            client_secret: ((grafana.github_client_secret)) 
+#            enabled: ((grafana.github_enabled)) 
   lifecycle: service
   name: web
   networks:
@@ -375,13 +375,13 @@ instance_groups:
       drain_timeout: 10m
       worker_gateway:
         worker_key: ((worker_key))
-      garden:
+      containderd:
         allow_host_access: true
         listen_address: 0.0.0.0:7777
         listen_network: tcp
     release: concourse    
-  - <<: *telegraf_job
-  - <<: *telegraf_agent_job      
+#  - <<: *telegraf_job
+#  - <<: *telegraf_agent_job      
   lifecycle: service
   networks:
   - default:
@@ -394,42 +394,42 @@ instance_groups:
   vm_type: ((worker_vm_type))
 
   
-- name: influxdb
-  azs: ((azs))
-  instances: 1
-  jobs:
-  - release: influxdb
-    name: influxdb
-    properties:
-      influxdb:
-        database: ((influxdb.dbname))
-        users:
-        - name: ((influxdb.reader_username))
-          password: ((influxdb.reader_password))
-          privilege: read
-          database: ((influxdb.dbname))
-        - name: ((influxdb.writer_username))
-          password: ((influxdb.writer_password))
-          privilege: write
-          database: ((influxdb.dbname))
-        - name: ((influxdb.administrator_username))
-          password: ((influxdb.administrator_password))
-          privilege: admin
-        retention_policy_rules:
-          example:
-            default: autogen
-            retention_policies:
-            - name: autogen
-              duration: 14d 
-  stemcell: default
-  update:
-    max_in_flight: 1
-  vm_type: ((vm_type))
-  networks:
-  - default:
-    - dns
-    - gateway
-    name: ((network_name))
+#- name: influxdb
+#  azs: ((azs))
+#  instances: 1
+##  jobs:
+#  - release: influxdb
+#    name: influxdb
+#    properties:
+#      influxdb:
+#        database: ((influxdb.dbname))
+#        users:
+#        - name: ((influxdb.reader_username))
+#          password: ((influxdb.reader_password))
+#          privilege: read
+#          database: ((influxdb.dbname))
+#        - name: ((influxdb.writer_username))
+#          password: ((influxdb.writer_password))
+#          privilege: write
+#          database: ((influxdb.dbname))
+#        - name: ((influxdb.administrator_username))
+#          password: ((influxdb.administrator_password))
+#          privilege: admin
+#        retention_policy_rules:
+#          example:
+#            default: autogen
+#            retention_policies:
+#            - name: autogen
+#              duration: 14d 
+#  stemcell: default
+#  update:
+#    max_in_flight: 1
+#  vm_type: ((vm_type))
+#  networks:
+ # - default:
+ #   - dns
+ #   - gateway
+ #   name: ((network_name))
 
 
 update:

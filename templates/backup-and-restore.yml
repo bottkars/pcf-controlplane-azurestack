@@ -1,0 +1,28 @@
+
+- type: replace
+  path: /releases/name=backup-and-restore-sdk?
+  value:
+    name: backup-and-restore-sdk
+    version: ((backup-and-restore-sdk-release))
+    url: https://bosh.io/d/github.com/cloudfoundry-incubator/backup-and-restore-sdk-release?v=((backup-and-restore-sdk-release))
+
+- type: replace
+  path: /instance_groups/name=db/jobs/-
+  value:
+    name: bbr-atcdb
+    release: concourse
+    properties:
+      postgresql:
+        database: atc
+        role:
+          name: concourse
+          password: ((postgres_password))
+          postgresql_database: atc
+          permissions: ['SUPERUSER']
+
+
+- type: replace
+  path: /instance_groups/name=db/jobs/-
+  value:
+    release: backup-and-restore-sdk
+    name: database-backup-restorer
