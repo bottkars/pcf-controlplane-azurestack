@@ -104,7 +104,7 @@ foreach($piv_object in $piv_objects) {
 
 $STEMCELL_VER="250.17"
 .\get-lateststemcells.ps1 -Families 250 -STEMRELEASE 17
-bosh upload-stemcell "$DOWNLOADDIR/stemcells/$STEMCELL_VER/bosh-stemcell-$($STEMCELL_VER)-azure-hyperv-ubuntu-xenial-go_agent.tgz"
+bosh upload-stemcell "$DOWNLOADDIR/stemcells/$STEMCELL_VER/bosh-stemcell-$($STEMCELL_VER)-azure-hyperv-ubuntu-bionic-go_agent.tgz"
 
 om --env $HOME/om_$($RG).env `
 --request-timeout 7200 `

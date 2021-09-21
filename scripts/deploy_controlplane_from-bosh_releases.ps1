@@ -105,8 +105,8 @@ if (!$redeploy.IsPresent) {
                 invoke-webrequest -Uri "https://bosh.io/d/github.com/pivotasl-cf/credhub-release?v=$($releases.'credhub-release')" `
                     -OutFile "$downloaddir/credhub-release-$($releases.'credhub-release').tgz"
                 
-                invoke-webrequest -Uri "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=$($releases.'stemcell-release')" ``
-                    -OutFile "$downloaddir/bosh-azure-hyperv-ubuntu-xenial-go_agent-$($releases.'stemcell-release')"
+                invoke-webrequest -Uri "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-bionic-go_agent?v=$($releases.'stemcell-release')" ``
+                    -OutFile "$downloaddir/bosh-azure-hyperv-ubuntu-bionic-go_agent-$($releases.'stemcell-release')"
          
                 # bosh upload-release git+https://github.com/vito/telegraf-boshrelease
                 
@@ -144,7 +144,7 @@ if (!$redeploy.IsPresent) {
 
 
             bosh upload-release  "$downloaddir/credhub-release-$($releases.'credhub-release').tgz"
-            bosh upload-stemcell "$downloaddir/bosh-stemcell-($releases.'stemcell-release')-azure-hyperv-ubuntu-xenial-go_agent.tgz"
+            bosh upload-stemcell "$downloaddir/bosh-stemcell-($releases.'stemcell-release')-azure-hyperv-ubuntu-bionic-go_agent.tgz"
 
             #    invoke-webrequest -Uri "https://bosh.io/d/github.com/cloudfoundry-incubator/windows-utilities-release?v=$($releases.'windows-utilities-release')" `
             #        -OutFile "$downloaddir/windows-utilities-release-$($releases.'windows-utilities-release').tgz"
@@ -183,7 +183,7 @@ if (!$redeploy.IsPresent) {
                 https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=$($releases.'postgres-release')
     
             bosh upload-stemcell `
-                https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=$($releases.'stemcell-release')
+                https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-bionic-go_agent?v=$($releases.'stemcell-release')
     
             bosh upload-release git+https://github.com/vito/telegraf-boshrelease
             

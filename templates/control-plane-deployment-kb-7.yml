@@ -47,6 +47,7 @@ releases:
 #  version: ((influxdb-boshrelease)) 
 #  url: https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=((influxdb-boshrelease)) 
 - name: bosh-dns-aliases
+  url: "https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=((bosh-dns-aliases-release))"
   version: ((bosh-dns-aliases-release))
 - name: bpm
   version: ((bpm-release))
@@ -246,6 +247,7 @@ instance_groups:
           ca_cert:
             certificate: ((control-plane-tls.certificate))
         url: ((external_url)):8844
+      enable_resource_causality: true  
       enable_across_step: true  
       external_url: ((external_url))
       generic_oauth:
