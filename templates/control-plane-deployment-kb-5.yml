@@ -62,9 +62,9 @@ releases:
   url: git+https://github.com/vito/telegraf-agent-boshrelease
 stemcells:
 - alias: default
-  os: ubuntu-xenial
+  os: ubuntu-bionic
   version: ((stemcell-release))
-  url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=((stemcell-release))
+  url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-bionic-go_agent?v=((stemcell-release))
 addons:
 - jobs:
   - name: bosh-dns-aliases

@@ -23,7 +23,7 @@ network-assignment:
   name: ((singleton_availability_zone))   
 properties-configuration:
   security_configuration:
-    trusted_certificates: ((fullchain))
+#    trusted_certificates: ((fullchain))
     opsmanager_root_ca_trusted_certs: true
   director_configuration:
     max_threads: 8
