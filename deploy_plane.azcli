@@ -4,7 +4,7 @@ IMAGE_RG="images"
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.10.11-build.222.vhd"
+opsManVHD="ops-manager-2.10.23-build.356.vhd"
 OPSMAN_IMAGE="https://${IMAGE_ACCOUNT}.blob.local.azurestack.external/${IMAGE_CONTAINER}/${opsManVHD}"
 
 

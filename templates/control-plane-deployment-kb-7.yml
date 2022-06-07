@@ -46,6 +46,9 @@ releases:
 #- name: "influxdb"
 #  version: ((influxdb-boshrelease)) 
 #  url: https://bosh.io/d/github.com/vito/influxdb-boshrelease?v=((influxdb-boshrelease)) 
+- name: bosh-dns
+  url: "https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=((bosh-dns-release))"
+  version: ((bosh-dns-release))
 - name: bosh-dns-aliases
   url: "https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=((bosh-dns-aliases-release))"
   version: ((bosh-dns-aliases-release))
@@ -62,6 +65,10 @@ releases:
 #  version: ((telegraf-agent-release))    
 #  url: git+https://github.com/vito/telegraf-agent-boshrelease
 stemcells:
+- alias: "jammy"
+  os: "ubuntu-jammy"
+  version: 0.0.7               
+  url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-jammy-go_agent?v=0.0.7
 - alias: default
   os: ubuntu-xenial
   version: ((stemcell-release))
@@ -344,6 +351,8 @@ instance_groups:
         roles:
         - name: concourse
           password: ((postgres_password))
+          permissions:
+          - "SUPERUSER"
         - name: credhub
           password: ((credhub_db_password))
         - name: uaa
@@ -369,7 +378,7 @@ instance_groups:
     max_in_flight: 1
   vm_type: ((vm_type))
 - name: worker-linux
-  instances: 2
+  instances: 3
   azs: ((azs))
   jobs:
   - name: worker
@@ -480,6 +489,7 @@ variables:
     common_name: controlplaneca
     is_ca: true
   type: certificate
+#
 #- name: control-plane-tls
 #  options:
 #    alternative_names:
