@@ -344,6 +344,8 @@ instance_groups:
         roles:
         - name: concourse
           password: ((postgres_password))
+          permissions:
+          - SUPERUSER
         - name: credhub
           password: ((credhub_db_password))
         - name: uaa
