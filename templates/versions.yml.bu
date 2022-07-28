@@ -1,40 +1,20 @@
-<<<<<<< HEAD
-stemcell-release: "0.0.7"
-=======
-stemcell-release: "621.245"
->>>>>>> d4cbfe27e943e8a63d8d3c0261f222b9f206451f
+stemcell-release: "621.256"
 influxdb-boshrelease: "4"
 telegraf-release: "4"
 telegraf-agent-release: "1"
 
-<<<<<<< HEAD
-garden-runc-release: "1.20.4"
-uaa-release: "75.19.0"
-bpm-release: "1.1.17"
-bosh-dns-aliases-release: "0.0.4"
-bosh-dns-release: "1.31.0"
-postgres-release: "43"
-=======
-garden-runc-release: "1.20.7"
-uaa-release: "75.20.0"
+garden-runc-release: "1.20.9"
+uaa-release: "75.21.0"
 bpm-release: "1.1.18"
 bosh-dns-aliases-release: "0.0.4"
 postgres-release: "44"
->>>>>>> d4cbfe27e943e8a63d8d3c0261f222b9f206451f
-windows-utilities-release: "0.15.0"
+windows-utilities-release: "0.17.0"
 garden-windows-bosh-release: "0.16.0"
-windows-tools-release: "73"
+windows-tools-release: "74"
 winc-release: "2.5.0"
 grafana-boshrelease: "13.3.0"
-<<<<<<< HEAD
-concourse-bosh-release: "7.7.1"
-credhub-release: "2.12.4"
-minio-boshrelease: "2022-04-29T01-27-09Z"
-backup-and-restore-sdk-release: "1.18.36"
-=======
-concourse-bosh-release: "7.8.1"
+concourse-bosh-release: "7.8.2"
 credhub-release: "2.12.6"
-minio-boshrelease: "2022-06-25T15-50-16Z"
-backup-and-restore-sdk-release: "1.18.42"
->>>>>>> d4cbfe27e943e8a63d8d3c0261f222b9f206451f
+minio-boshrelease: "2022-07-26T00-53-03Z"
+backup-and-restore-sdk-release: "1.18.47"
 
