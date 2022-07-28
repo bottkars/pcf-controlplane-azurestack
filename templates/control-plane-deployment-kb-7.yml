@@ -352,7 +352,11 @@ instance_groups:
         - name: concourse
           password: ((postgres_password))
           permissions:
+<<<<<<< HEAD
           - "SUPERUSER"
+=======
+          - SUPERUSER
+>>>>>>> d4cbfe27e943e8a63d8d3c0261f222b9f206451f
         - name: credhub
           password: ((credhub_db_password))
         - name: uaa

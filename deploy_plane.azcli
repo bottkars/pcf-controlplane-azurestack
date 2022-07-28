@@ -4,7 +4,7 @@ IMAGE_RG="images"
 IMAGE_CONTAINER=images
 IMAGE_ACCOUNT=opsmanagerimage
 OPS_MAN_NIC=OPSMANNIC
-opsManVHD="ops-manager-2.10.23-build.356.vhd"
+opsManVHD="ops-manager-2.10.32-build.420.vhd"
 OPSMAN_IMAGE="https://${IMAGE_ACCOUNT}.blob.local.azurestack.external/${IMAGE_CONTAINER}/${opsManVHD}"
 
 
@@ -14,6 +14,7 @@ az storage account create --name $IMAGE_ACCOUNT --resource-group "${IMAGE_RG}" -
 az storage container create --name $IMAGE_CONTAINER \
     --account-name $IMAGE_ACCOUNT \
     --public-access blob --resource-group ${IMAGE_RG}
+
 
 
 az storage blob copy start --destination-blob ${opsManVHD} --destination-container ${IMAGE_CONTAINER} \
@@ -42,4 +43,18 @@ az deployment group create --resource-group ${AZS_RESOURCE_GROUP} \
     mask=${MASK} \
     location=${AZS_LOCATION} \
     OpsManImageURI=${OPSMAN_IMAGE}
+
+az storage container create --name opsmanager \
+ --account-name boshstorageaccount
+az storage container create --name bosh \
+ --account-name boshstorageaccount
+az storage container create --name stemcell \
+ --account-name boshstorageaccount
+az storage table create --name stemcells \
+ --account-name boshstorageaccount
+XTRA_ACCOUNT=$(az storage account list --query "[? contains(name, 'xtrastrg')].{name:name}" -o tsv )
+az storage container create --name bosh \
+--account-name $XTRA_ACCOUNT
+az storage container create --name stemcell \
+--account-name $XTRA_ACCOUNT
 
