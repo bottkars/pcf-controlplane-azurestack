@@ -1,4 +1,5 @@
-stemcell-release: "621.296"
+stemcell-release: "621.376"
+jammy-release: "1.75"
 influxdb-boshrelease: "4"
 telegraf-release: "4"
 telegraf-agent-release: "1"

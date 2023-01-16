@@ -66,6 +66,10 @@ stemcells:
   os: ubuntu-xenial
   version: ((stemcell-release))
   url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=((stemcell-release))
+- alias: default-jammy
+  os: ubuntu-jammy
+  version: ((jammy-release))
+  url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-jammy-go_agent?v=((jammy-release))  
 addons:
 - jobs:
   - name: bosh-dns-aliases
@@ -325,7 +329,7 @@ instance_groups:
     - dns
     - gateway
     name: ((network_name))
-  stemcell: default
+  stemcell: default-jammy
   update:
     max_in_flight: 1
   vm_type: ((web_vm_type))
@@ -366,7 +370,7 @@ instance_groups:
     - gateway
     name: ((network_name))
   persistent_disk_type: ((persistent_disk_type))
-  stemcell: default
+  stemcell: default-jammy
   update:
     max_in_flight: 1
   vm_type: ((vm_type))
@@ -392,7 +396,7 @@ instance_groups:
     - dns
     - gateway
     name: ((network_name))
-  stemcell: default
+  stemcell: default-jammy
   update:
     max_in_flight: 1
   vm_type: ((worker_vm_type))
